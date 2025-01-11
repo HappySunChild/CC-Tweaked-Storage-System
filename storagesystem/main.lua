@@ -16,6 +16,7 @@ local systemInterface = peripheral.wrap('bottom') ---@type Peripheral.Inventory
 local SYSTEM_SIZE = systemInterface.size()
 local SYSTEM_ITEMS = systemInterface.list()
 
+
 local theme = arg[1] or 'default'
 
 ThemeManager:SetTheme(theme, monitor)
@@ -44,16 +45,12 @@ local function findSystemIndex(targetName)
 		local name = string.match(item.name, '.*:(.*)')
 		local start = string.find(name, searchName, 1, true)
 		
-		if not start then
-			goto continue
+		if start then
+			table.insert(found, {
+				index = slotIndex,
+				start = start
+			})
 		end
-		
-		table.insert(found, {
-			index = slotIndex,
-			start = start
-		})
-		
-		::continue::
 	end
 	
 	if #found <= 0 then
@@ -98,17 +95,13 @@ local function getSortedList()
 	local list = {}
 	
 	for slot, item in pairs(SYSTEM_ITEMS) do
-		if not item then
-			goto continue
+		if item then
+			table.insert(list, {
+				slot = slot,
+				count = item.count,
+				name = item.name
+			})
 		end
-		
-		table.insert(list, {
-			slot = slot,
-			count = item.count,
-			name = item.name
-		})
-		
-		::continue::
 	end
 	
 	table.sort(list, function (a, b)
