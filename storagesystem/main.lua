@@ -22,8 +22,8 @@ local function getSystemItems()
 	return systemInterface.list()
 end
 
-local SYSTEM_SIZE = systemInterface.size()
 local SYSTEM_ITEMS = getSystemItems()
+local SYSTEM_SIZE = #SYSTEM_ITEMS
 
 
 local theme = arg[1] or 'default'
@@ -176,7 +176,7 @@ local function displayMenu()
 	
 	ui.pop(monitor)
 	
-	for i = 1, math.min(columnCount * rowCount, SYSTEM_SIZE, 100) do
+	for i = 1, math.min(SYSTEM_SIZE, columnCount * rowCount, 100) do
 		local item = displayList[i]
 		
 		if not item then
