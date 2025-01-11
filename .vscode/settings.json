@@ -1,0 +1,10 @@
+{
+	"Lua.diagnostics.disable": [
+		"undefined-field",
+		"deprecated",
+		"trailing-space",
+		"missing-parameter",
+		"need-check-nil",
+		"inject-field"
+	]
+}
