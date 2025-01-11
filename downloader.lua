@@ -7,8 +7,11 @@ end
 local files = {
 	'main.lua',
 	'theme.lua',
+	'config.lua',
 	
 	'themes/default.lua',
+	'themes/light.lua',
+	'themes/dark.lua',
 	'themes/matrix.lua',
 	
 	'utility/cache.lua',
