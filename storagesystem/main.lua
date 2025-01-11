@@ -13,7 +13,7 @@ local speaker = peripheral.find('speaker') ---@type Peripheral.Speaker
 local systemInterface = peripheral.wrap('bottom') ---@type Peripheral.Inventory
 
 local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
-local IS_AE2_SYSTEM = IS_OLDER_VERSION and systemInterface.listAvailableItems and systemInterface.getNodeEnergyAvailable
+local IS_AE2_SYSTEM = IS_OLDER_VERSION and systemInterface.listAvailableItems
 
 local AE2_IGNORE_COUNT_CAP = 2 ^ 31 - 1
 local DEFAULT_MAX_CAP = IS_AE2_SYSTEM and AE2_IGNORE_COUNT_CAP or 64
@@ -120,8 +120,10 @@ local function getSortedList()
 	for slot, item in pairs(SYSTEM_ITEMS) do
 		local ok = item ~= nil
 		
-		if IS_AE2_SYSTEM and item.count >= AE2_IGNORE_COUNT_CAP then
-			ok = false
+		if IS_AE2_SYSTEM then
+			if (item.isCraftable and item.count == 0) or (item.count >= AE2_IGNORE_COUNT_CAP) then
+				ok = false
+			end
 		end
 		
 		if ok then
@@ -321,7 +323,13 @@ end
 
 
 parallel.waitForAll(function ()
-	while not IS_AE2_SYSTEM do
+	if IS_AE2_SYSTEM then
+		print('Terminal requesting is not compatible with a ae2 system!')
+		
+		return
+	end
+	
+	while true do
 		requestTerminal()
 	end
 end, function ()
