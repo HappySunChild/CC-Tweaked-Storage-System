@@ -1,22 +1,34 @@
-local REFRESH_RATE = 5
-local COLUMN_WIDTH = 40
-local SORT_MODE = 'Desc'
-
 local ui          = require "utility.ui"
 local cache       = require "utility.cache"
 local numbers     = require "utility.numbers"
 local ProgressBar = require "utility.progressbar"
-local ThemeManager       = require "theme"
+local Theme       = require "theme"
+local Config      = require "config"
+
+
+
+Config:Load()
+
+local TRUNCATE_TEXT = Config:Get('TruncateText')
+local REFRESH_RATE = Config:Get('RefreshRate')
+local SORT_MODE = Config:Get('SortOrder')
+
+local TRUNCATE_LENGTH = 20
+local COLUMN_WIDTH = 40
+
+
 
 local monitor = peripheral.find('monitor') ---@type Peripheral.Monitor
 local speaker = peripheral.find('speaker') ---@type Peripheral.Speaker
 local systemInterface = peripheral.wrap('bottom') ---@type Peripheral.Inventory
+
 
 local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
 local IS_AE2_SYSTEM = IS_OLDER_VERSION and systemInterface.listAvailableItems
 
 local AE2_IGNORE_COUNT_CAP = 2 ^ 31 - 1
 local DEFAULT_MAX_CAP = IS_AE2_SYSTEM and AE2_IGNORE_COUNT_CAP or 64
+
 
 local function getSystemItems()
 	if IS_AE2_SYSTEM then
@@ -26,14 +38,10 @@ local function getSystemItems()
 	return systemInterface.list()
 end
 
+
 local SYSTEM_ITEMS = getSystemItems()
 local SYSTEM_SIZE = #SYSTEM_ITEMS
 
-
-local theme = arg[1] or 'default'
-
-ThemeManager:SetTheme(theme, monitor)
-ThemeManager:SetTheme(theme, term)
 
 term.clear()
 term.setCursorPos(1, 1)
@@ -100,11 +108,16 @@ end
 local function getDisplayName(rawName)
 	local item = rawName:match('.*:(.*)')
 	
+	---@type string
 	local formattedName = item:gsub('_(%l)', function (char)
 		return ' ' .. char:upper()
 	end):gsub('^%l', function (char)
 		return char:upper()
 	end)
+	
+	if TRUNCATE_TEXT and #formattedName > TRUNCATE_LENGTH then
+		formattedName = formattedName:sub(1, TRUNCATE_LENGTH - 3):gsub('%s*$', '') .. '...'
+	end
 	
 	--namespace = namespace:sub(1, 1):upper() .. namespace:sub(2, 2)
 	
@@ -138,8 +151,16 @@ local function getSortedList()
 	table.sort(list, function (a, b)
 		if a and b then
 			if SORT_MODE == 'Desc' then
+				if a.count == b.count then
+					return a.name < b.name
+				end
+				
 				return a.count > b.count
 			elseif SORT_MODE == 'Asc' then
+				if a.count == b.count then
+					return a.name < b.name
+				end
+				
 				return a.count < b.count
 			end
 		end
@@ -164,11 +185,12 @@ local function displayMenu()
 		return
 	end
 	
-	monitor.clear()
+	monitor.setBackgroundColor(Theme:GetColor('Background'))
 	
 	ui.push(monitor)
 	
-	monitor.setTextColor(colors.orange)
+	monitor.clear()
+	monitor.setTextColor(Theme:GetColor('Border'))
 	
 	for x = 1, columnCount do
 		for y = 1, rowCount do
@@ -183,10 +205,20 @@ local function displayMenu()
 		bottom = bottom .. string.rep('-', COLUMN_WIDTH - 1) .. '+'
 	end
 	
+	
 	monitor.setCursorPos(1, rowCount + 1)
 	monitor.write(bottom)
 	
 	ui.pop(monitor)
+	
+	
+	local cellBackground = Theme:GetColor('Cell')
+	local cellAltBackground = Theme:GetColor('CellAlt')
+	local cellFullBackground = Theme:GetColor('CellFull')
+	
+	local increaseForeground = Theme:GetColor('IncreaseText')
+	local decreaseForeground = Theme:GetColor('DecreaseText')
+	
 	
 	for i = 1, math.min(SYSTEM_SIZE, columnCount * rowCount, 100) do
 		local item = displayList[i]
@@ -195,33 +227,31 @@ local function displayMenu()
 			break
 		end
 		
+		ui.push(monitor)
+		
 		local slot = item.slot
 		local currentCount = item.count
-		
-		ui.push(monitor)
 		
 		local lastCount = lastCountCache:get(item.slot) or currentCount
 		local countDifference = currentCount - lastCount
 		
 		if currentCount > lastCount then
-			monitor.setTextColor(colors.green)
+			monitor.setTextColor(increaseForeground)
 		elseif currentCount < lastCount then
-			monitor.setTextColor(colors.pink)
+			monitor.setTextColor(decreaseForeground)
 		end
 		
-		if i % 2 == 0 then
-			monitor.setBackgroundColor(colors.gray)
+		if i % 2 ~= 0 then
+			monitor.setBackgroundColor(cellBackground)
 		else
-			monitor.setBackgroundColor(colors.black)
+			monitor.setBackgroundColor(cellAltBackground)
 		end
 		
 		
 		local max = maxStackCache:get(slot) or DEFAULT_MAX_CAP
 		
 		if currentCount >= max then
-			monitor.setBackgroundColor(colors.red)
-		elseif currentCount >= max * 0.8 then
-			--monitor.setBackgroundColor(colors.orange)
+			monitor.setBackgroundColor(cellFullBackground)
 		end
 		
 		
@@ -231,6 +261,7 @@ local function displayMenu()
 		local displayCount = getDisplayCount(currentCount)
 		
 		local text = string.format('%2d. %-20s | %s %+4d', i, displayName, displayCount, countDifference)
+		text = text:sub(1, COLUMN_WIDTH - 1)
 		
 		local x = 1 + math.floor((i - 1) / rowCount) * COLUMN_WIDTH
 		local y = (i - 1) % rowCount + 1
@@ -322,12 +353,22 @@ local function requestTerminal()
 end
 
 
+
+local loadTheme = arg[1] or 'default'
+
+Theme:LoadThemePalette(loadTheme, monitor)
+Theme:LoadThemePalette(loadTheme, term)
+
+
+Config:Save()
+
 parallel.waitForAll(function ()
 	if IS_AE2_SYSTEM then
 		print('Terminal requesting is not compatible with a ae2 system!')
 		
 		return
 	end
+	
 	
 	while true do
 		requestTerminal()
