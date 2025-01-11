@@ -3,9 +3,8 @@ local mathUtility = {}
 local abbreviations = {'K', 'M', 'B', 'T', 'Qa', 'Qi'}
 
 ---@param number number
----@param decimals integer
 ---@return string
-function mathUtility.abbreviate(number, decimals)
+function mathUtility.abbreviate(number)
 	if number < 1000 then
 		return tostring(number)
 	end
