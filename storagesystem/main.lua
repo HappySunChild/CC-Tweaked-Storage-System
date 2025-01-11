@@ -16,6 +16,7 @@ local systemInterface = peripheral.wrap('bottom') ---@type Peripheral.Inventory
 local SYSTEM_SIZE = systemInterface.size()
 local SYSTEM_ITEMS = systemInterface.list()
 
+local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
 
 local theme = arg[1] or 'default'
 
@@ -31,8 +32,18 @@ monitor.setTextScale(0.5)
 monitor.setCursorBlink(false)
 
 
-local maxStackCache = cache.new(systemInterface.getItemLimit)
+local maxStackCache = cache.new()
 local lastCountCache = cache.new()
+
+if IS_OLDER_VERSION then
+	maxStackCache.fallback = function (slot)
+		local meta = systemInterface.getItemMeta(slot)
+		
+		return meta.maxCount
+	end
+else
+	maxStackCache.fallback = systemInterface.getItemLimit
+end
 
 
 ---@param targetName string
@@ -128,7 +139,7 @@ local function displayMenu()
 	
 	if columnCount == 0 then
 		monitor.setCursorPos(1, 1)
-		monitor.write('too small!')
+		monitor.write('monitor too small!')
 		
 		return
 	end
@@ -185,11 +196,11 @@ local function displayMenu()
 		end
 		
 		
-		local max = maxStackCache:get(slot)
+		local max = maxStackCache:get(slot) or 64
 		
-		if item.count >= max then
+		if currentCount >= max then
 			monitor.setBackgroundColor(colors.red)
-		elseif item.count >= max * 0.8 then
+		elseif currentCount >= max * 0.8 then
 			--monitor.setBackgroundColor(colors.orange)
 		end
 		
@@ -197,7 +208,7 @@ local function displayMenu()
 		lastCountCache:set(slot, currentCount)
 		
 		local displayName = getDisplayName(item.name)
-		local displayCount = getDisplayCount(item.count)
+		local displayCount = getDisplayCount(currentCount)
 		
 		local text = string.format('%2d. %-20s | %s %+4d', i, displayName, displayCount, countDifference)
 		
