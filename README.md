@@ -6,3 +6,9 @@
 ## Downloading
  This can be downloaded by using the following command.<br/>
  `wget run https://raw.githubusercontent.com/HappySunChild/CC-Tweaked-Storage-System/refs/heads/main/downloader.lua`
+
+## Requirements
+1. Speaker
+2. Monitors - must be atleast 2x1!
+3. Any output inventory - must be on left side of the Computer
+4. Storage system inventory - must be on bottom side of the Computer

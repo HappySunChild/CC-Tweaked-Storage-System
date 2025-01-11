@@ -247,7 +247,7 @@ local function requestTerminal()
 	
 	local slot, details = findSystemIndex(requestedItemName)
 	
-	if not slot then
+	if not slot or not details then
 		printError(string.format('Could not find %q', requestedItemName))
 		
 		os.pullEvent('key')
