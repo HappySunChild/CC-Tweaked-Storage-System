@@ -1,5 +1,5 @@
 local function download(path)
-	local link = 'https://raw.githubusercontent.com/HappySunChild/CC-Tweaked-Storage-System/main/storagesystem/' .. path
+	local link = 'https://raw.githubusercontent.com/HappySunChild/CC-Tweaked-Storage-System/refs/heads/main/storagesystem/' .. path
 	
 	return shell.execute('wget', link, path)
 end
