@@ -2,8 +2,6 @@ local REFRESH_RATE = 5
 local COLUMN_WIDTH = 40
 local SORT_MODE = 'Desc'
 
-local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
-
 local ui          = require "utility.ui"
 local cache       = require "utility.cache"
 local numbers     = require "utility.numbers"
@@ -14,8 +12,14 @@ local monitor = peripheral.find('monitor') ---@type Peripheral.Monitor
 local speaker = peripheral.find('speaker') ---@type Peripheral.Speaker
 local systemInterface = peripheral.wrap('bottom') ---@type Peripheral.Inventory
 
+local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
+local IS_AE2_SYSTEM = IS_OLDER_VERSION and systemInterface.listAvailableItems and systemInterface.getNodeEnergyAvailable
+
+local AE2_IGNORE_COUNT_CAP = 2 ^ 31 - 1
+local DEFAULT_MAX_CAP = IS_AE2_SYSTEM and AE2_IGNORE_COUNT_CAP or 64
+
 local function getSystemItems()
-	if IS_OLDER_VERSION and systemInterface.listAvailableItems then
+	if IS_AE2_SYSTEM then
 		return systemInterface.listAvailableItems()
 	end
 	
@@ -43,7 +47,7 @@ monitor.setCursorBlink(false)
 local maxStackCache = cache.new()
 local lastCountCache = cache.new()
 
-if IS_OLDER_VERSION then
+if IS_OLDER_VERSION and systemInterface.getItemMeta then
 	maxStackCache.fallback = function (slot)
 		local meta = systemInterface.getItemMeta(slot)
 		
@@ -114,7 +118,13 @@ local function getSortedList()
 	local list = {}
 	
 	for slot, item in pairs(SYSTEM_ITEMS) do
-		if item then
+		local ok = item ~= nil
+		
+		if IS_AE2_SYSTEM and item.count >= AE2_IGNORE_COUNT_CAP then
+			ok = false
+		end
+		
+		if ok then
 			table.insert(list, {
 				slot = slot,
 				count = item.count,
@@ -204,7 +214,7 @@ local function displayMenu()
 		end
 		
 		
-		local max = maxStackCache:get(slot) or 64
+		local max = maxStackCache:get(slot) or DEFAULT_MAX_CAP
 		
 		if currentCount >= max then
 			monitor.setBackgroundColor(colors.red)
@@ -311,7 +321,7 @@ end
 
 
 parallel.waitForAll(function ()
-	while true do
+	while not IS_AE2_SYSTEM do
 		requestTerminal()
 	end
 end, function ()
