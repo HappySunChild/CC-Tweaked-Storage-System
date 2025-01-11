@@ -1,1 +1,0 @@
-shell.run('storagesystem/main.lua')
