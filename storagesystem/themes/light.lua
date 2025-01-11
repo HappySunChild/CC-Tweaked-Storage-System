@@ -1,11 +1,12 @@
 return {
-	black = 0xE4E4E4,
-	gray = 0xBDBDBD,
+	Background = 0xCBCBCB,
 	
-	white = 0x0F0F0F,
-	green = 0x00A804,
-	pink = 0xFF0000,
-	orange = 0x0005E3,
+	Cell = 0xE4E4E4,
+	CellAlt = 0xBDBDBD,
+	CellFull = 0xC56464,
 	
-	red = 0xC56464
+	Text = 0x0F0F0F,
+	IncreaseText = 0x00A804,
+	DecreaseText = 0xFF0000,
+	Border = 0x0005E3
 }

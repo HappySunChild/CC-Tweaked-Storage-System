@@ -1,11 +1,12 @@
 return {
-	black = 0x000000, -- row bg
-	gray = 0x001300, -- row alt bg
+	Background = 0x001300,
 	
-	white = 0x00FF00, -- regular text fg
-	green = 0x0072FF, -- increase fg
-	pink = 0xFF0000, -- decrease fg
-	orange = 0x45FF45, -- border fg
+	Cell = 0x000000,
+	CellAlt = 0x001300,
+	CellFull = 0x001371,
 	
-	red = 0x001371 -- full row bg,
+	Text = 0x00FF00,
+	IncreaseText = 0x0072FF,
+	DecreaseText = 0xFF0000,
+	Border = 0x45FF45
 }
