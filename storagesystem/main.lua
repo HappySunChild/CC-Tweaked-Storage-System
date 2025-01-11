@@ -2,6 +2,8 @@ local REFRESH_RATE = 5
 local COLUMN_WIDTH = 40
 local SORT_MODE = 'Desc'
 
+local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
+
 local ui          = require "utility.ui"
 local cache       = require "utility.cache"
 local numbers     = require "utility.numbers"
@@ -12,11 +14,17 @@ local monitor = peripheral.find('monitor') ---@type Peripheral.Monitor
 local speaker = peripheral.find('speaker') ---@type Peripheral.Speaker
 local systemInterface = peripheral.wrap('bottom') ---@type Peripheral.Inventory
 
+local function getSystemItems()
+	if IS_OLDER_VERSION and systemInterface.listAvailableItems then
+		return systemInterface.listAvailableItems()
+	end
+	
+	return systemInterface.list()
+end
 
 local SYSTEM_SIZE = systemInterface.size()
-local SYSTEM_ITEMS = systemInterface.list()
+local SYSTEM_ITEMS = getSystemItems()
 
-local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
 
 local theme = arg[1] or 'default'
 
@@ -321,7 +329,7 @@ end, function ()
 			sleep(1)
 		end
 		
-		SYSTEM_ITEMS = systemInterface.list()
+		SYSTEM_ITEMS = getSystemItems()
 		
 		displayMenu()
 	end
