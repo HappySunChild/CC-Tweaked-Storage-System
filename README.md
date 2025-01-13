@@ -9,6 +9,6 @@
 
 ## Requirements
 1. Speaker
-2. Monitors - must be atleast 2x1!
-3. Any output inventory - must be on left side of the Computer
+2. Monitors
+3. Any output inventory - must be on right side of the Computer
 4. Storage system inventory - must be on bottom side of the Computer
