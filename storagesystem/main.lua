@@ -1,4 +1,4 @@
-local completion  = require "cc.completion" ---@type cc.completion
+local completion  = require "cc.completion"
 local ui          = require "utility.ui"
 local cache       = require "utility.cache"
 local numbers     = require "utility.numbers"
@@ -287,7 +287,7 @@ local function requestTerminal()
 	term.setCursorPos(1, 1)
 	term.clear()
 	
-	local choice = ui.prompt('Request', nil, nil, function (partial)
+	local request = ui.prompt('Request', nil, nil, function (partial)
 		local choices = {
 			'!insert'
 		}
@@ -301,7 +301,7 @@ local function requestTerminal()
 		return completion.choice(partial, choices)
 	end)
 	
-	if choice == '!insert' then
+	if request == '!insert' then
 		speaker.playNote('bell', 0.5, 6)
 		
 		insertItems()
@@ -309,12 +309,12 @@ local function requestTerminal()
 		return
 	end
 	
-	local slot, info = getSystemSlot(choice)
+	local slot, info = getSystemSlot(request)
 	
 	if not (slot and info) then
 		speaker.playNote('pling', 0.5, 22)
 		
-		printError(string.format('Could not find %q', choice))
+		printError(string.format('Could not find %q', request))
 		
 		os.pullEvent('key')
 		
@@ -343,7 +343,7 @@ local function requestTerminal()
 	
 	speaker.playNote('bell', 0.5, 12)
 	
-	outputItems(choice, amount)
+	outputItems(request, amount)
 end
 
 local function displayMenu()
@@ -463,6 +463,8 @@ end
 
 local loadTheme = arg[1] or 'default'
 
+Theme:Clear(term)
+Theme:Clear(monitor)
 Theme:LoadThemePalette(loadTheme, monitor)
 Theme:LoadThemePalette(loadTheme, term)
 

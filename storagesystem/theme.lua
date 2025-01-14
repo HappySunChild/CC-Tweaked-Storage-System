@@ -43,4 +43,14 @@ function Theme:GetColor(index)
 	return colors[PALETTE_MAP[index]] or 1
 end
 
+---@param screen term.Redirect
+function Theme:Clear(screen)
+	for _, colorName in pairs(PALETTE_MAP) do
+		local col = colors[colorName]
+		
+		local r, g, b = term.nativePaletteColor(col)
+		screen.setPaletteColor(col, r, g, b)
+	end
+end
+
 return Theme
