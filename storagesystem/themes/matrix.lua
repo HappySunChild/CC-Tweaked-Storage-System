@@ -1,7 +1,7 @@
 return {
-	Background = 0x001300,
+	Background = 0x000900,
 	
-	Cell = 0x000000,
+	Cell = 0x001A00,
 	CellAlt = 0x001300,
 	CellFull = 0x001371,
 	
