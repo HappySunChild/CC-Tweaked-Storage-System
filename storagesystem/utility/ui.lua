@@ -1,18 +1,17 @@
 local ui = {}
 
----@param screen Redirect
-function ui.writeCenter(y, text, screen)
-	local width = screen.getSize()
+function ui.writeCenter(y, text)
+	local width = term.getSize()
 	
 	local len = string.len(text)
 	local x = math.floor(width / 2 - len / 2)
 	
-	screen.setCursorPos(x, y)
-	screen.write(text)
+	term.setCursorPos(x, y)
+	term.write(text)
 end
 
----@param length integer?
----@param screen Redirect
+---@param length number
+---@param screen term.Redirect
 function ui.wipeLine(length, screen)
 	local width = screen.getSize()
 	local x, y = screen.getCursorPos()
@@ -25,7 +24,7 @@ end
 
 local layers = {}
 
----@param screen Redirect?
+---@param screen term.Redirect?
 function ui.push(screen)
 	screen = screen or term
 	
@@ -43,7 +42,7 @@ function ui.push(screen)
 	table.insert(layers[screen], 1, styleLayer)
 end
 
----@param screen Redirect?
+---@param screen term.Redirect?
 function ui.pop(screen)
 	screen = screen or term
 	
@@ -61,6 +60,33 @@ function ui.pop(screen)
 	-- apply style layer
 	screen.setTextColor(styleLayer.foreground)
 	screen.setBackgroundColor(styleLayer.background)
+end
+
+---@param text string
+---@param ... any
+function ui.prompt(text, ...)
+	term.write(text .. ': ')
+	
+	return read(...)
+end
+
+
+function ui.progressbar(x, y, width, alpha)
+	local len = math.floor(width * alpha)
+	local eLen = width - len
+	
+	local textBlit = colors.toBlit(term.getTextColor())
+	local fillBlit = colors.toBlit(colors.white)
+	local emptyBlit = colors.toBlit(colors.lightGray)
+	
+	ui.push()
+	
+	term.setCursorPos(x, y)
+	term.blit(string.rep(' ', len), textBlit:rep(len), fillBlit:rep(len))
+	term.setCursorPos(x + len, y)
+	term.blit(string.rep(' ', eLen), textBlit:rep(eLen), emptyBlit:rep(eLen))
+	
+	ui.pop()
 end
 
 return ui
