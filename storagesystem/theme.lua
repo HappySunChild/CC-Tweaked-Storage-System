@@ -1,3 +1,13 @@
+---@class Theme
+---@field Background number
+---@field Cell number
+---@field CellAlt number
+---@field CellFull number
+---@field Text number
+---@field IncreaseText number
+---@field DecreaseText number
+---@field Border number
+
 local PALETTE_MAP = {
 	Background = 'black',
 	
@@ -14,7 +24,7 @@ local PALETTE_MAP = {
 local Theme = {}
 
 ---@param themeName string
----@param screen Redirect
+---@param screen term.Redirect
 function Theme:LoadThemePalette(themeName, screen)
 	themeName = themeName or 'default'
 	
