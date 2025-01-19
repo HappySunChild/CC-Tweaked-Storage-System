@@ -9,7 +9,7 @@
 
 ## Requirements
 1. Speaker
-2. Monitors
+2. Monitors (Advanced Monitors recommended)
 3. Wired Modems (and cables!)
 4. Any buffer inventory - Used for inputting/outputting items into the system.
 
