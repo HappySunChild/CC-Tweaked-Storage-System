@@ -14,7 +14,7 @@
 4. Any buffer inventory - Used for inputting/outputting items into the system.
 
 ## Setup
-Setting up the storage system is relatively easy and cheap, as all you really need to get started is cables, wired modems and a couple inventories to connect to the system with said wired modems.
+Setting up the storage system is relatively easy and cheap, as all you really need to get started is some monitors, cables, wired modems and a couple inventories to connect to the system with said wired modems.
 
 The placement of the buffer inventory in the system does not matter, but it is recommended you have it near/next to the Computer running the system program, since it is where you make requests for inputting and outputting items from the system.
 
