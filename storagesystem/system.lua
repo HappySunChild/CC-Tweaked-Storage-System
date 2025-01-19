@@ -209,15 +209,21 @@ function system:PushItems(name, count)
 	repeat
 		local remaining = count - totalTransfered
 		local transfered = inv.pushItems(outputName, slot, remaining)
-
+		
+		if item then
+			item.count = item.count - transfered
+			
+			if item.count <= 0 then
+				self.Items[inv][slot] = nil
+			end
+		end
+		
 		totalTransfered = totalTransfered + transfered
-
+		
 		if transfered == 0 then
 			if remaining >= item.count then
-				self:Update()
-
 				inv, slot, item = self:FindSystemItem(item.name)
-
+				
 				if not (item and slot and item) then
 					return false
 				end
