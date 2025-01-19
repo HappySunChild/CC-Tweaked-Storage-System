@@ -1,3 +1,4 @@
 .vscode
 .storage_system.config
+.settings
 startup.lua
