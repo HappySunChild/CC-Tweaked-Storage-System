@@ -21,16 +21,34 @@ local PALETTE_MAP = {
 	Border = 'orange',
 }
 
-local Theme = {}
+
+
+local theme = {}
+
+function theme.getThemes()
+	local path = fs.getDir(shell.getRunningProgram()) .. '/themes'
+	local themes = fs.list(path)
+	
+	for index, file in ipairs(themes) do
+		themes[index] = file:match('(.+)%.lua')
+	end
+	
+	return themes
+end
+
+
+function theme.getInfo(themeName)
+	themeName = themeName or 'default'
+	
+	return require('themes.' .. tostring(themeName):lower())
+end
 
 ---@param themeName string
 ---@param screen term.Redirect
-function Theme:LoadThemePalette(themeName, screen)
-	themeName = themeName or 'default'
+function theme.loadThemePalette(themeName, screen)
+	local themeInfo = theme.getInfo(themeName)
 	
-	local theme = require('themes.' .. themeName)
-	
-	for index, newColor in pairs(theme) do
+	for index, newColor in pairs(themeInfo) do
 		index = PALETTE_MAP[index] or index
 		
 		screen.setPaletteColor(colors[index], newColor)
@@ -39,18 +57,19 @@ end
 
 ---@param index string
 ---@return integer
-function Theme:GetColor(index)
+function theme.getColor(index)
 	return colors[PALETTE_MAP[index]] or 1
 end
 
 ---@param screen term.Redirect
-function Theme:Clear(screen)
-	for _, colorName in pairs(PALETTE_MAP) do
-		local col = colors[colorName]
-		
-		local r, g, b = term.nativePaletteColor(col)
-		screen.setPaletteColor(col, r, g, b)
+function theme.clear(screen)
+	for _, col in pairs(colors) do
+		if type(col) == 'number' then
+			local r, g, b = term.nativePaletteColor(col)
+			
+			screen.setPaletteColor(col, r, g, b)
+		end
 	end
 end
 
-return Theme
+return theme

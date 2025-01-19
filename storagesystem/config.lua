@@ -2,9 +2,14 @@ local CONFIG_PATH = '.storage_system.config'
 
 local Configuration = {}
 Configuration.config = {
-	TruncateText = true,
-	RefreshRate = 5,
+	UserTheme = 'default',
 	SortOrder = 'Desc',
+	BufferInventory = '',
+	
+	TruncateText = true,
+	TabInventorySelect = false,
+	
+	RefreshRate = 5
 }
 
 ---@param name string
@@ -22,16 +27,18 @@ function Configuration:Load()
 	local exists = settings.load(CONFIG_PATH)
 	
 	if exists then
-		local loadedConfig = settings.get('StorageSystemConfig', self.config)
+		local loadedConfig = settings.get('storagesystem.config', self.config)
 		
 		for index, value in pairs(loadedConfig) do
 			self.config[index] = value
 		end
 	end
+	
+	return exists
 end
 
 function Configuration:Save()
-	settings.set('StorageSystemConfig', self.config)
+	settings.set('storagesystem.config', self.config)
 	settings.save(CONFIG_PATH)
 end
 

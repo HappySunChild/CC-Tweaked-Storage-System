@@ -28,4 +28,8 @@ function CacheClass:set(index, value)
 	self.values[index] = value
 end
 
+function CacheClass:clear()
+	table.clear(self.values)
+end
+
 return Cache

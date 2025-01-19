@@ -1,54 +1,30 @@
-local completion  = require "cc.completion"
-local ui          = require "utility.ui"
-local cache       = require "utility.cache"
-local numbers     = require "utility.numbers"
-local Theme       = require "theme"
-local Config      = require "config"
+local theme       = require('theme')
+local config      = require('config')
+local setup       = require('setup')
+local system      = require('system')
+local ui          = require('utility.ui')
+local numbers     = require('utility.numbers')
+local completion  = require('cc.completion')
 
 
+if setup.shouldRun() then
+	setup.run()
+end
 
-Config:Load()
 
-local TRUNCATE_TEXT = Config:Get('TruncateText')
-local REFRESH_RATE = Config:Get('RefreshRate')
-local SORT_MODE = Config:Get('SortOrder')
+local SORT_MODE = config:Get('SortOrder')
+local USER_THEME = config:Get('UserTheme')
+local REFRESH_RATE = config:Get('RefreshRate')
+local TRUNCATE_TEXT = config:Get('TruncateText')
+local TABS_ENABLED = config:Get('TabInventorySelect')
+
 
 local TRUNCATE_LENGTH = 20
 local COLUMN_WIDTH = 40
-
-
+local CURRENT_INVENTORY = 0
 
 local monitor = peripheral.find('monitor') ---@type peripheral.Monitor
 local speaker = peripheral.find('speaker') ---@type peripheral.Speaker
-local outputInterface = peripheral.wrap('right') ---@type peripheral.Inventory
-local systemInterface = peripheral.wrap('bottom') ---@type peripheral.Inventory
-
-
-local IS_OLDER_VERSION = _VERSION == 'Lua 5.1'
-local IS_AE2_SYSTEM = IS_OLDER_VERSION and systemInterface.listAvailableItems
-
-local AE2_IGNORE_COUNT_CAP = 2 ^ 31 - 1
-local DEFAULT_MAX_CAP = IS_AE2_SYSTEM and AE2_IGNORE_COUNT_CAP or 64
-
-
-local function getSystemItems()
-	if IS_AE2_SYSTEM then
-		return systemInterface.listAvailableItems()
-	end
-	
-	return systemInterface.list()
-end
-
-local function getSystemSize()
-	if IS_OLDER_VERSION then
-		return #getSystemItems()
-	end
-	
-	return systemInterface.size()
-end
-
-local SYSTEM_ITEMS = getSystemItems()
-local SYSTEM_SIZE = getSystemSize()
 
 
 term.clear()
@@ -59,90 +35,31 @@ monitor.clear()
 monitor.setTextScale(0.5)
 monitor.setCursorBlink(false)
 
+theme.clear(monitor)
+theme.loadThemePalette(USER_THEME, monitor)
+theme.loadThemePalette(USER_THEME, term)
 
-local maxStackCache = cache.new()
-local lastCountCache = cache.new()
 
-if IS_OLDER_VERSION and systemInterface.getItemMeta then
-	maxStackCache.fallback = function (slot)
-		local meta = systemInterface.getItemMeta(slot)
-		
-		return meta.maxCount
-	end
-else
-	maxStackCache.fallback = systemInterface.getItemLimit
-end
+system:InitiatePeripherals()
 
----@param rawName string
----@return string
+
+local LAST_COUNTS = {
+	[0] = system:GetSystemItemCounts()
+}
+
+
 local function filterName(rawName)
-	local name = rawName:match('.*:(.*)') ---@type string
+	local name = rawName:match('[^:]*$') ---@type string
 	local filtered = name:gsub('_', ' ')
 	
 	return filtered
 end
 
----@param targetName string
-local function getSystemSlot(targetName)
-	local searchName = targetName:lower()
-	
-	local found = {}
-	
-	for slotIndex, item in pairs(SYSTEM_ITEMS) do
-		local name = filterName(item.name)
-		local start = string.find(name, searchName, 1, true)
-		
-		if name == searchName then
-			return slotIndex, item
-		end
-		
-		if start then
-			table.insert(found, {
-				index = slotIndex,
-				start = start
-			})
-		end
-	end
-	
-	if #found <= 0 then
-		return
-	end
-	
-	table.sort(found, function (a, b)
-		return a.start < b.start
-	end)
-	
-	local chosenIndex = found[1].index
-	
-	return chosenIndex, SYSTEM_ITEMS[chosenIndex]
-end
-
-local function getSystemCount(itemName)
-	local count = 0
-	
-	for _, item in pairs(SYSTEM_ITEMS) do
-		if item.name == itemName then
-			count = count + item.count
-		end
-	end
-	
-	return count
-end
-
-
-local function updateSystem()
-	SYSTEM_ITEMS = getSystemItems()
-	SYSTEM_SIZE = getSystemSize()
-end
-
-
----@param count number
 local function getDisplayCount(count)
 	return string.format('%5s', numbers.abbreviate(count))
 end
 
----@param rawName string
-local function getDisplayName(rawName)
+local function getDisplayName(rawName, truncate)
 	local name = filterName(rawName)
 	
 	---@type string
@@ -152,35 +69,30 @@ local function getDisplayName(rawName)
 		return char:upper()
 	end)
 	
-	if TRUNCATE_TEXT and #formattedName > TRUNCATE_LENGTH then
+	if truncate ~= false and TRUNCATE_TEXT and #formattedName > TRUNCATE_LENGTH then
 		formattedName = formattedName:sub(1, TRUNCATE_LENGTH - 3):gsub('%s*$', '') .. '...'
 	end
-	
-	--namespace = namespace:sub(1, 1):upper() .. namespace:sub(2, 2)
 	
 	return formattedName
 end
 
-
-
-
 local function getSortedList()
 	local list = {}
+	local items = {}
 	
-	for slot, item in pairs(SYSTEM_ITEMS) do
+	if CURRENT_INVENTORY == 0 then
+		items = system:GetSystemItems()
+	else
+		items = system:GetInventoryItems(system:GetInventory(CURRENT_INVENTORY))
+	end
+	
+	for _, item in pairs(items) do
 		local ok = item ~= nil
-		
-		if IS_AE2_SYSTEM then
-			if (item.isCraftable and item.count == 0) or (item.count >= AE2_IGNORE_COUNT_CAP) then
-				ok = false
-			end
-		end
 		
 		if ok then
 			table.insert(list, {
-				slot = slot,
 				count = item.count,
-				name = item.name
+				name = system:GetItemName(item)
 			})
 		end
 	end
@@ -207,82 +119,6 @@ local function getSortedList()
 end
 
 
-
-local function outputItems(itemName, amount)
-	local slot, detail = getSystemSlot(itemName)
-	
-	if not (slot and detail) then
-		return
-	end
-	
-	local width = term.getSize()
-	local totalTransfered = 0
-	
-	local _debounce = false
-	
-	repeat
-		local transfered = systemInterface.pushItems('right', slot, amount - totalTransfered)
-		
-		totalTransfered = totalTransfered + transfered
-		
-		ui.progressbar(1, 4, width, totalTransfered / amount)
-		
-		if transfered == 0 then
-			if amount > detail.count then
-				updateSystem()
-			
-				slot, detail = getSystemSlot(itemName)
-				
-				if not (slot and detail) then
-					break
-				end
-			elseif not _debounce then
-				_debounce = true
-				
-				ui.push()
-				term.setTextColor(colors.red)
-				ui.writeCenter(3, 'Output is full!')
-				ui.pop()
-				
-				speaker.playNote('bell', 0.5, 0)
-			end
-		elseif _debounce then
-			_debounce = false
-			term.setCursorPos(1, 4)
-			term.clearLine()
-		end
-	until totalTransfered >= amount
-	
-	speaker.playNote("bell", 1, 18)
-	
-	return totalTransfered
-end
-
-local function insertItems()
-	local width = term.getSize()
-	
-	local totalCount = 0
-	local items = outputInterface.list()
-	
-	for _ in pairs(items) do
-		totalCount = totalCount + 1
-	end
-	
-	local count = 0
-	
-	for slot, item in pairs(items) do
-		count = count + 1
-		
-		local alpha = count / totalCount
-		ui.progressbar(1, 4, width, alpha)
-		
-		outputInterface.pushItems('bottom', slot, item.count)
-	end
-	
-	speaker.playNote("bell", 1, 18)
-end
-
-
 local function requestTerminal()
 	term.setCursorPos(1, 1)
 	term.clear()
@@ -292,7 +128,7 @@ local function requestTerminal()
 			'!insert'
 		}
 		
-		for _, item in pairs(SYSTEM_ITEMS) do
+		for _, item in pairs(system:GetSystemItems()) do
 			table.insert(choices, filterName(item.name))
 		end
 		
@@ -304,14 +140,19 @@ local function requestTerminal()
 	if request == '!insert' then
 		speaker.playNote('bell', 0.5, 6)
 		
-		insertItems()
+		system:PullItems()
+		
+		os.cancelAlarm(1)
+		term.write('1')
+		
+		speaker.playNote('bell', 0.5, 18)
 		
 		return
 	end
 	
-	local slot, info = getSystemSlot(request)
+	local inventory, slot, item = system:FindSystemItem(request)
 	
-	if not (slot and info) then
+	if not (slot and item and item) then
 		speaker.playNote('pling', 0.5, 22)
 		
 		printError(string.format('Could not find %q', request))
@@ -321,15 +162,16 @@ local function requestTerminal()
 		return
 	end
 	
+	local detail = inventory.getItemDetail(slot)
+	local name = system:GetItemName(item)
 	
-	local detail = systemInterface.getItemDetail(slot)
+	local systemCount = system:GetSystemCount(name)
+	local maxOutput = system.BufferInventory.size() * detail.maxCount
 	
-	local systemCount = getSystemCount(info.name)
-	local maxOutput = outputInterface.size() * detail.maxCount
-	
-	ui.writeCenter(6, string.format('Selected: %10s', getDisplayName(info.name)))
+	ui.writeCenter(6, string.format('Selected: %10s', getDisplayName(name, false)))
 	ui.writeCenter(8, string.format('System Count: %6d', systemCount))
 	ui.writeCenter(9, string.format('Max Output: %8d', maxOutput))
+	
 	term.setCursorPos(1, 2)
 	
 	speaker.playNote('bell', 0.5, 6)
@@ -343,12 +185,21 @@ local function requestTerminal()
 	
 	speaker.playNote('bell', 0.5, 12)
 	
-	outputItems(request, amount)
+	local success = system:PushItems(name, amount)
+	
+	if success then
+		speaker.playNote('bell', 0.5, 24)
+	end
 end
 
 local function displayMenu()
-	monitor.setBackgroundColor(Theme:GetColor('Background'))
+	if CURRENT_INVENTORY > #system.Inventories then
+		CURRENT_INVENTORY = 0
+	end
+	
+	monitor.setBackgroundColor(theme.getColor('Background'))
 	monitor.clear()
+	
 	
 	monitor.setCursorPos(1, 1)
 	
@@ -357,13 +208,11 @@ local function displayMenu()
 	
 	if #displayList == 0 then
 		monitor.write('no items :(')
-		
-		return
 	end
 	
 	local rows = height - 2
 	local columns = math.floor(width / COLUMN_WIDTH)
-	local cellCount = math.min(SYSTEM_SIZE, columns * rows)
+	local cellCount = math.min(system.SlotCount, columns * rows)
 	
 	columns = math.ceil(cellCount / rows)
 	
@@ -378,7 +227,7 @@ local function displayMenu()
 	do
 		ui.push(monitor)
 		
-		monitor.setTextColor(Theme:GetColor('Border'))
+		monitor.setTextColor(theme.getColor('Border'))
 		
 		for x = 1, columns do
 			for y = 1, rows do
@@ -397,14 +246,15 @@ local function displayMenu()
 	end
 	
 	
-	local cellBackground = Theme:GetColor('Cell')
-	local cellAltBackground = Theme:GetColor('CellAlt')
-	local cellFullBackground = Theme:GetColor('CellFull')
+	local cellBackground = theme.getColor('Cell')
+	local cellAltBackground = theme.getColor('CellAlt')
 	
-	local increaseForeground = Theme:GetColor('IncreaseText')
-	local decreaseForeground = Theme:GetColor('DecreaseText')
+	local increaseForeground = theme.getColor('IncreaseText')
+	local decreaseForeground = theme.getColor('DecreaseText')
 	
-	for i = 1, math.min(cellCount, 100) do
+	local lastCounts = LAST_COUNTS[CURRENT_INVENTORY]
+	
+	for i = 1, cellCount do
 		local item = displayList[i]
 		
 		if not item then
@@ -413,10 +263,10 @@ local function displayMenu()
 		
 		ui.push(monitor)
 		
-		local slot = item.slot
 		local currentCount = item.count
+		local lastCount = lastCounts[item.name] or 0 --currentCount --lastCountCache:get(item.slot) or currentCount
 		
-		local lastCount = lastCountCache:get(item.slot) or currentCount
+		
 		local countDifference = currentCount - lastCount
 		
 		if currentCount > lastCount then
@@ -431,15 +281,7 @@ local function displayMenu()
 			monitor.setBackgroundColor(cellAltBackground)
 		end
 		
-		
-		local max = maxStackCache:get(slot) or DEFAULT_MAX_CAP
-		
-		if currentCount >= max then
-			monitor.setBackgroundColor(cellFullBackground)
-		end
-		
-		
-		lastCountCache:set(slot, currentCount)
+		--lastCountCache:set(slot, currentCount)
 		
 		local displayName = getDisplayName(item.name)
 		local displayCount = getDisplayCount(currentCount)
@@ -457,47 +299,160 @@ local function displayMenu()
 		
 		ui.pop(monitor)
 	end
+	
+	
+	monitor.setCursorPos(1, height)
+	
+	
+	if TABS_ENABLED then
+		local fgBlit = colors.toBlit(colors.white)
+		
+		local text = ''
+		local bg = ''
+		
+		for index = 0, #system.Inventories do
+			local color = cellBackground
+			
+			if index == CURRENT_INVENTORY then
+				color = theme.getColor('CellFull')
+			elseif index % 2 == 0 then
+				color = cellAltBackground
+			end
+			
+			local blit = colors.toBlit(color)
+			local name = getDisplayName(system:GetInventoryName(index) or 'All Inventories')
+			
+			
+			text = text .. name .. ' '
+			bg = bg .. blit:rep(#name) .. colors.toBlit(colors.black)
+		end
+		
+		monitor.blit(text, fgBlit:rep(#text), bg)
+	else
+		local name = getDisplayName(system:GetInventoryName(CURRENT_INVENTORY) or 'All Inventories')
+		local text = string.format('%s [%d/%d]', getDisplayName(name), CURRENT_INVENTORY, #system.Inventories)
+		
+		monitor.setCursorPos(1, height)
+		monitor.write(text)
+	end
 end
 
 
 
-local loadTheme = arg[1] or 'default'
-
-Theme:Clear(term)
-Theme:Clear(monitor)
-Theme:LoadThemePalette(loadTheme, monitor)
-Theme:LoadThemePalette(loadTheme, term)
-
-
-Config:Save()
-
-parallel.waitForAll(function ()
-	if IS_AE2_SYSTEM then
-		print('Terminal requesting is not compatible with a ae2 system!')
-		
+local function selectInventory(index)
+	if index == CURRENT_INVENTORY then
 		return
 	end
 	
+	CURRENT_INVENTORY = index
 	
+	speaker.playSound('block.lever.click', 1, 2)
+	
+	displayMenu()
+end
+
+
+
+
+
+-- parallel functions
+
+
+local function terminal()
 	while true do
 		requestTerminal()
 	end
-end, function ()
-	displayMenu()
-	
-	while true do
-		local _, height = monitor.getSize()
-		
-		for i = 1, REFRESH_RATE do
-			local text = string.format('Next refresh in %d seconds...', REFRESH_RATE - i)
+end
+
+local function refresh()
+	local function redraw()
+		while true do
+			os.pullEvent('system_updated')
 			
-			monitor.setCursorPos(1, height)
-			monitor.write(text)
-			
-			sleep(1)
+			displayMenu()
 		end
-		
-		updateSystem()
-		displayMenu()
 	end
-end)
+	
+	local function periodicUpdate()
+		while true do
+			LAST_COUNTS[0] = system:GetSystemItemCounts()
+			
+			for i, inventory in ipairs(system.Inventories) do
+				LAST_COUNTS[i] = system:GetInventoryItemCounts(inventory)
+			end
+			
+			system:Update()
+			
+			sleep(REFRESH_RATE)
+		end
+	end
+	
+	parallel.waitForAll(redraw, periodicUpdate)
+end
+
+local function modems()
+	local function connect()
+		while true do
+			os.pullEvent('peripheral')
+			
+			system:InitiatePeripherals()
+		end
+	end
+	
+	local function disconnect()
+		while true do
+			os.pullEvent('peripheral_detach')
+			
+			system:InitiatePeripherals()
+		end
+	end
+	
+	parallel.waitForAll(connect, disconnect)
+end
+
+local function monitors()
+	local function onResize()
+		while true do
+			os.pullEvent('monitor_resize')
+			
+			theme.loadThemePalette(USER_THEME, monitor)
+			monitor.setTextScale(0.5)
+			
+			displayMenu()
+		end
+	end
+	
+	local function touch()
+		while true do
+			local _, _, cx, cy = os.pullEvent('monitor_touch')
+			local _, height = monitor.getSize()
+			
+			local newIndex = (CURRENT_INVENTORY + 1) % (#system.Inventories + 1)
+			
+			if cy == height and TABS_ENABLED then
+				local x = 0
+				
+				for index = 0, #system.Inventories do
+					local name = getDisplayName(system:GetInventoryName(index) or 'All Inventories')
+					local width = #name
+					
+					if cx > x and cx < x + width then
+						newIndex = index
+						
+						break
+					end
+					
+					x = x + width + 1
+				end
+			end
+			
+			selectInventory(newIndex)
+		end
+	end
+	
+	parallel.waitForAll(touch, onResize)
+end
+
+
+
+parallel.waitForAll(terminal, refresh, monitors, modems)

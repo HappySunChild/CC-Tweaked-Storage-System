@@ -10,6 +10,7 @@ function ui.writeCenter(y, text)
 	term.write(text)
 end
 
+
 ---@param length number
 ---@param screen term.Redirect
 function ui.wipeLine(length, screen)
@@ -22,7 +23,9 @@ function ui.wipeLine(length, screen)
 	screen.setCursorPos(x, y)
 end
 
+
 local layers = {}
+
 
 ---@param screen term.Redirect?
 function ui.push(screen)
@@ -62,12 +65,24 @@ function ui.pop(screen)
 	screen.setBackgroundColor(styleLayer.background)
 end
 
+
 ---@param text string
 ---@param ... any
 function ui.prompt(text, ...)
 	term.write(text .. ': ')
 	
 	return read(...)
+end
+
+
+function ui.promptBlocking(text, check, ...)
+	local choice = nil
+	
+	repeat
+		choice = ui.prompt(text, ...)
+	until check(choice)
+	
+	return choice
 end
 
 
@@ -88,5 +103,6 @@ function ui.progressbar(x, y, width, alpha)
 	
 	ui.pop()
 end
+
 
 return ui

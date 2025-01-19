@@ -8,15 +8,17 @@ local files = {
 	'main.lua',
 	'theme.lua',
 	'config.lua',
+	'setup.lua',
+	'system.lua',
 	
 	'themes/default.lua',
 	'themes/light.lua',
 	'themes/dark.lua',
+	'themes/kimbie.lua',
 	'themes/matrix.lua',
 	
 	'utility/cache.lua',
 	'utility/numbers.lua',
-	'utility/progressbar.lua',
 	'utility/ui.lua'
 }
 
