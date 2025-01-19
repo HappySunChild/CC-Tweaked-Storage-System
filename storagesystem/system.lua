@@ -210,12 +210,10 @@ function system:PushItems(name, count)
 		local remaining = count - totalTransfered
 		local transfered = inv.pushItems(outputName, slot, remaining)
 		
-		if item then
-			item.count = item.count - transfered
-			
-			if item.count <= 0 then
-				self.Items[inv][slot] = nil
-			end
+		item.count = item.count - transfered
+		
+		if item.count <= 0 then
+			self.Items[inv][slot] = nil
 		end
 		
 		totalTransfered = totalTransfered + transfered

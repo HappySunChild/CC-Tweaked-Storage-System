@@ -7,8 +7,20 @@ local numbers     = require('utility.numbers')
 local completion  = require('cc.completion')
 
 
+local function find(tab, item)
+	for i, v in next, tab do
+		if v == item then
+			return i
+		end
+	end
+end
+
 if setup.shouldRun() then
 	setup.run()
+end
+
+if find(arg, '-c') then
+	setup.configScreen()
 end
 
 
