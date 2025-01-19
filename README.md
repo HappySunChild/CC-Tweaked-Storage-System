@@ -1,6 +1,8 @@
 # CC:Tweaked Storage System
  A useful program for interfacing/visualizing large storage systems.
  
+ **THIS PROGRAM IS DESIGNED TO WORK WITH `CC: TWEAKED 1.109.3+`**
+ 
 ![Screenshot1](images/screenshot1.png)
 
 ## Downloading
@@ -21,4 +23,5 @@ The placement of the buffer inventory in the system does not matter, but it is r
 **All inventories connected to the system must be connected via Wired Modems and cables, directly placing inventories next to the Computer will not work.**
 
 ![backside](images/backside.png)
+
 ![setup](images/simplesetup.png)
