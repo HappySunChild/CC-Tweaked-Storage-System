@@ -239,12 +239,31 @@ function system:PullItems()
 
 	for slot, item in pairs(self.BufferInventory.list()) do
 		local inv = self:FindSystemItem(item.name, item.nbt)
-
+		
 		if not inv then
 			inv = self.Inventories[1]
 		end
-
-		inv.pullItems(outputName, slot, item.count)
+		
+		
+		-- fix for when inventory is full
+		-- this fix is kind of hacky and thrown together
+		-- but it works
+		
+		local current = inv
+		
+		repeat
+			local transferred = current.pullItems(outputName, slot, item.count)
+			
+			item.count = item.count - transferred
+			
+			if transferred == 0 then
+				current = next(self.Items, current) or next(self.Items)
+				
+				if current == inv then
+					break
+				end
+			end
+		until transferred >= item.count
 	end
 
 	self:Update()
