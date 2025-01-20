@@ -121,6 +121,7 @@ local configOptions = {
 	{true, false},
 }
 
+
 function setup.configScreen()
 	local current = 1
 	
@@ -173,6 +174,10 @@ function setup.configScreen()
 				end
 				
 				newValue = val
+			end
+			
+			if index == 'UserTheme' then
+				theme.loadThemePalette(newValue, term)
 			end
 			
 			config:Set(index, newValue)

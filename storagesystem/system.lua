@@ -238,8 +238,10 @@ function system:PullItems()
 	local outputName = peripheral.getName(self.BufferInventory)
 
 	for slot, item in pairs(self.BufferInventory.list()) do
-		local inv = self:FindSystemItem(item.name, item.nbt)
+		local inv = self:FindSystemItem(item.name, item.nbt) -- prioritize putting items of the same type in the same inventory
 		
+		-- this needs to be changed
+		-- buuut im too lazy, and it works *fine*
 		if not inv then
 			inv = self.Inventories[1]
 		end
