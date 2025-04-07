@@ -1,4 +1,5 @@
 local cache = require("utility.cache")
+local table = require("utility.table")
 local config = require("config")
 
 local system = {}
@@ -15,6 +16,35 @@ local function filterName(rawName)
 	return filtered
 end
 
+---Returns a list of inventory peripherals, with a optional blacklist
+---@param blacklist string[]?
+---@return peripheral.Inventory[]
+local function getInventories(blacklist)
+	blacklist = blacklist or {}
+
+	if _VERSION == "Lua 5.1" then
+		local inventories = {}
+
+		for _, name in ipairs(peripheral.getNames()) do
+			if not table.find(blacklist, name) then
+				local types = { peripheral.getType(name) }
+
+				if table.find(types, "inventory") then
+					table.insert(inventories, peripheral.wrap(name))
+				end
+			end
+		end
+
+		return inventories
+	end
+
+	return {
+		peripheral.find("inventory", function(name)
+			return name ~= "right" and not table.find(blacklist, name)
+		end),
+	}
+end
+
 local inventoryNameCache = cache.new(peripheral.getName)
 local nbtItemNameCache = cache.new()
 
@@ -24,10 +54,7 @@ function system:InitiatePeripherals()
 	self.BufferInventory = peripheral.wrap(bufferInventory)
 
 	---@type peripheral.Inventory[]
-	local inventories =
-		{ peripheral.find("inventory", function(name)
-			return name ~= "right" and name ~= bufferInventory
-		end) }
+	local inventories = getInventories({ bufferInventory })
 
 	local list = {}
 
