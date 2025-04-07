@@ -1,4 +1,4 @@
-local cache =  require("utility.cache")
+local cache = require("utility.cache")
 local config = require("config")
 
 local system = {}
@@ -17,7 +17,6 @@ end
 
 local inventoryNameCache = cache.new(peripheral.getName)
 local nbtItemNameCache = cache.new()
-
 
 function system:InitiatePeripherals()
 	local bufferInventory = config:Get("BufferInventory")
@@ -52,9 +51,6 @@ function system:Update()
 	os.queueEvent("system_updated")
 end
 
-
-
-
 function system:IsValidInventory(inventory)
 	if not inventory then
 		return false
@@ -76,8 +72,6 @@ function system:GetInventoryName(index)
 
 	return inventoryNameCache:get(inv)
 end
-
-
 
 function system:GetInventoryItems(inventory)
 	local list = {}
@@ -127,8 +121,6 @@ function system:GetSystemSize()
 	return slotCount, itemCount
 end
 
-
-
 function system:GetInventoryItemCounts(inventory)
 	local counts = {}
 
@@ -163,8 +155,6 @@ function system:GetSystemCount(name)
 	return counts[name] or 0
 end
 
-
-
 function system:FindSystemItem(name, nbt)
 	for inv, invItems in pairs(self.Items) do
 		for slot, item in pairs(invItems) do
@@ -193,8 +183,6 @@ function system:GetItemName(item)
 	return item.name:lower()
 end
 
-
-
 function system:PushItems(name, count)
 	local inv, slot, item = self:FindSystemItem(name)
 
@@ -209,19 +197,19 @@ function system:PushItems(name, count)
 	repeat
 		local remaining = count - totalTransfered
 		local transfered = inv.pushItems(outputName, slot, remaining)
-		
+
 		item.count = item.count - transfered
-		
+
 		if item.count <= 0 then
 			self.Items[inv][slot] = nil
 		end
-		
+
 		totalTransfered = totalTransfered + transfered
-		
+
 		if transfered == 0 then
 			if remaining >= item.count then
 				inv, slot, item = self:FindSystemItem(item.name)
-				
+
 				if not (item and slot and item) then
 					return false
 				end
@@ -239,28 +227,27 @@ function system:PullItems()
 
 	for slot, item in pairs(self.BufferInventory.list()) do
 		local inv = self:FindSystemItem(item.name, item.nbt) -- prioritize putting items of the same type in the same inventory
-		
+
 		-- this needs to be changed
 		-- buuut im too lazy, and it works *fine*
 		if not inv then
 			inv = self.Inventories[1]
 		end
-		
-		
+
 		-- fix for when inventory is full
 		-- this fix is kind of hacky and thrown together
 		-- but it works
-		
+
 		local current = inv
-		
+
 		repeat
 			local transferred = current.pullItems(outputName, slot, item.count)
-			
+
 			item.count = item.count - transferred
-			
+
 			if transferred == 0 then
 				current = next(self.Items, current) or next(self.Items)
-				
+
 				if current == inv then
 					break
 				end

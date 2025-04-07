@@ -19,7 +19,8 @@ local files = {
 	
 	'utility/cache.lua',
 	'utility/numbers.lua',
-	'utility/ui.lua'
+	'utility/ui.lua',
+	'utility/table.lua'
 }
 
 local failed = {}
