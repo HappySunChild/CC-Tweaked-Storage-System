@@ -21,6 +21,15 @@ local function filterName(rawName)
 	return filtered
 end
 
+---Returns whether a peripheral has a certain type.
+---@param name string
+---@param peripheralType string
+local function hasType(name, peripheralType)
+	local types = { peripheral.getTypes(name) }
+
+	return table.find(types, peripheralType) ~= nil
+end
+
 ---Returns a list of inventory peripherals, with a optional blacklist
 ---@param blacklist string[]?
 ---@return peripheral.Inventory[]
@@ -32,7 +41,7 @@ local function getInventories(blacklist)
 
 		for _, name in ipairs(modem.getNamesRemote()) do
 			if not table.find(blacklist, name) then
-				if peripheral.hasType(name, "inventory") then
+				if hasType(name, "inventory") then
 					table.insert(inventories, peripheral.wrap(name))
 				end
 			end
