@@ -25,7 +25,7 @@ end
 ---@param name string
 ---@param peripheralType string
 local function hasType(name, peripheralType)
-	local types = { peripheral.getTypes(name) }
+	local types = { peripheral.getType(name) }
 
 	return table.find(types, peripheralType) ~= nil
 end
