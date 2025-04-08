@@ -2,6 +2,11 @@ local cache = require("utility.cache")
 local table = require("utility.table")
 local config = require("config")
 
+---@type peripheral.Modem
+local modem = peripheral.find("modem")
+
+assert(modem, "Missing modem!")
+
 local system = {}
 system.BufferInventory = nil ---@type peripheral.Inventory
 
@@ -25,11 +30,9 @@ local function getInventories(blacklist)
 	if _VERSION == "Lua 5.1" then
 		local inventories = {}
 
-		for _, name in ipairs(peripheral.getNames()) do
+		for _, name in ipairs(modem.getNamesRemote()) do
 			if not table.find(blacklist, name) then
-				local types = { peripheral.getType(name) }
-
-				if table.find(types, "inventory") then
+				if peripheral.hasType(name, "inventory") then
 					table.insert(inventories, peripheral.wrap(name))
 				end
 			end
@@ -40,7 +43,7 @@ local function getInventories(blacklist)
 
 	return {
 		peripheral.find("inventory", function(name)
-			return name ~= "right" and not table.find(blacklist, name)
+			return modem.isPresentRemote(name) and not table.find(blacklist, name)
 		end),
 	}
 end
