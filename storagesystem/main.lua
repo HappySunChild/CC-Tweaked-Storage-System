@@ -200,7 +200,7 @@ local function displayMenu()
 	local displayList = getSortedList()
 
 	if #displayList == 0 then
-		monitor.write("no items :(")
+		monitor.write("No items detected. ")
 	end
 
 	local rows = height - 2
@@ -210,7 +210,7 @@ local function displayMenu()
 	columns = math.ceil(cellCount / rows)
 
 	if columns == 0 then
-		monitor.write("monitor too small!")
+		monitor.write("Monitor too small!")
 
 		return
 	end
