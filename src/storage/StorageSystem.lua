@@ -19,10 +19,12 @@ local function get_inventory(inv_name)
 	return inventory
 end
 
----@class StorageSystem.ItemOccurance
----@field inventory string
----@field slot integer
----@field item peripheral.InventoryItem
+---@param a peripheral.InventoryItem
+---@param b peripheral.InventoryItem
+---@return boolean
+local function default_item_sort(a, b)
+	return a.count > b.count
+end
 
 ---@class StorageSystem
 ---@field inventories table<string, peripheral.Inventory>
@@ -44,6 +46,18 @@ local CLASS = {
 		for inv_name, inventory in next, self.inventories do
 			self._item_cache[inv_name] = inventory.list()
 		end
+	end,
+	---Returns an array of all the inventories in the system.
+	---@param self StorageSystem
+	---@return string[]
+	get_inventories = function(self)
+		local inventories = {}
+
+		for inv_name in next, self.inventories do
+			table.insert(inventories, inv_name)
+		end
+
+		return inventories
 	end,
 
 	---Calculates the total size (slots) of the system.
@@ -75,39 +89,23 @@ local CLASS = {
 
 		return output
 	end,
-
-	---Returns the size (slot count) of the specified inventory, if it is connected to the system.
+	---Returns an array of all the items in the system, sorted.
+	---
+	---You can specify your own sorter callback.
 	---@param self StorageSystem
-	---@param inv_name string The name of the inventory.
-	---@return integer
-	get_inventory_size = function(self, inv_name)
-		local inventory = self.inventories[inv_name]
-
-		if inventory == nil then
-			error(UNKNOWN_INVENTORY:format(inv_name), 2)
-		end
-
-		return inventory.size()
-	end,
-	---Returns a dictionary of all the items, and their counts, inside the specified inventory.
-	---@param self StorageSystem
-	---@param inv_name string The name of the inventory.
-	---@return table<string, integer>
-	get_inventory_items = function(self, inv_name)
-		local inv_items = self._item_cache[inv_name]
-
-		if inv_items == nil then
-			error(MISSING_INVENTORY_ITEMS:format(inv_name), 2)
-		end
-
+	---@param sorter? fun(a: peripheral.InventoryItem, b: peripheral.InventoryItem): boolean
+	---@return peripheral.InventoryItem[]
+	get_system_items_sorted = function(self, sorter)
 		local output = {}
 
-		for _, item in next, inv_items do
-			local name = item.name
-			local count = item.count
-
-			output[name] = (output[name] or 0) + count
+		for name, count in next, self:get_system_items() do
+			table.insert(output, {
+				name = name,
+				count = count,
+			})
 		end
+
+		table.sort(output, sorter or default_item_sort)
 
 		return output
 	end,
@@ -116,14 +114,14 @@ local CLASS = {
 	---
 	---Example usage:
 	---```lua
-	---for inv, slot, item in system:find_iter("minecraft_torch") do
-	---	...
+	---for inv, slot, item in system:find_item("minecraft:torch") do
+	---	print(inv, slot, item.count)
 	---end
 	---```
 	---@param self StorageSystem
 	---@param item_name string
 	---@return fun(): string?, integer?, peripheral.InventoryItem?
-	find_iter = function(self, item_name)
+	find_item = function(self, item_name)
 		local cur_inv = nil
 		local cur_slot = nil
 
@@ -144,23 +142,6 @@ local CLASS = {
 
 			return nil, nil, nil
 		end
-	end,
-	---Returns an array of all the occurances where the item appears in the system.
-	---@param self StorageSystem
-	---@param item_name string
-	---@return StorageSystem.ItemOccurance[]
-	find_system_item = function(self, item_name)
-		local occurances = {}
-
-		for inv, slot, item in self:find_iter(item_name) do
-			table.insert(occurances, {
-				inventory = inv,
-				slot = slot,
-				item = item,
-			})
-		end
-
-		return occurances
 	end,
 
 	---Pulls items from one inventory into another.
@@ -198,6 +179,8 @@ local CLASS = {
 		return from_inventory.pushItems(inv_to, slot_from, count, slot_to)
 	end,
 
+	---Imports an item into the system from an external inventory, at the specified slot.
+	---@see StorageSystem.import_item
 	---@param self StorageSystem
 	---@param inv_from string
 	---@param slot_from integer
@@ -233,6 +216,23 @@ local CLASS = {
 
 		return total_transferred
 	end,
+	---Imports all items from an inventory.
+	---@param self StorageSystem
+	---@param inv_from string
+	---@return integer
+	import_inventory = function(self, inv_from)
+		local total_transferred = 0
+
+		local inventory = get_inventory(inv_from)
+
+		for slot in next, inventory.list() do
+			local transferred = self:import_from_slot(inv_from, slot)
+
+			total_transferred = total_transferred + transferred
+		end
+
+		return total_transferred
+	end,
 	---Imports the specified item into the system from an external inventory.
 	---@see StorageSystem.pull_items
 	---@param self StorageSystem
@@ -246,20 +246,17 @@ local CLASS = {
 		local inventory = get_inventory(inv_from)
 
 		for slot, item in next, inventory.list() do
-			if item.name ~= item_name then
-				goto continue
+			if item.name == item_name then
+				local remaining = count and count - total_transferred or item.count
+				local transferred =
+					self:import_from_slot(inv_from, slot, math.min(remaining, item.count))
+
+				total_transferred = total_transferred + transferred
+
+				if count == nil or total_transferred >= count or transferred == 0 then
+					break
+				end
 			end
-
-			local remaining = count and count - total_transferred or item.count
-			local transferred = self:import_from_slot(inv_from, slot, math.min(remaining, item.count))
-
-			total_transferred = total_transferred + transferred
-
-			if count == nil or total_transferred >= count or transferred == 0 then
-				break
-			end
-
-			::continue::
 		end
 
 		return total_transferred
@@ -275,7 +272,7 @@ local CLASS = {
 	export_item = function(self, item_name, inv_to, slot_to, count)
 		local total_transferred = 0
 
-		for inv, slot in self:find_iter(item_name) do
+		for inv, slot in self:find_item(item_name) do
 			local remaining = count ~= nil and count - total_transferred or nil
 			local transferred = self:push_items(inv, slot, inv_to, slot_to, remaining)
 
@@ -291,7 +288,7 @@ local CLASS = {
 }
 local METATABLE = { __index = CLASS }
 
----@param initial_inventories string[]
+---@param initial_inventories? string[]
 ---@return StorageSystem
 local function StorageSystem(initial_inventories)
 	local new_storagesystem = setmetatable({
@@ -299,8 +296,10 @@ local function StorageSystem(initial_inventories)
 		_item_cache = {},
 	}, METATABLE)
 
-	for _, inventory in next, initial_inventories do
-		new_storagesystem:track_inventory(inventory)
+	if initial_inventories ~= nil then
+		for _, inventory in next, initial_inventories do
+			new_storagesystem:track_inventory(inventory)
+		end
 	end
 
 	return new_storagesystem

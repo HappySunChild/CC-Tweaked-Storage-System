@@ -1,5 +1,6 @@
 ---@type AutoProcessing.Pattern
 return {
+	label = "8x Iron Ingots",
 	-- desired outcome per "process"
 	results = {
 		["minecraft:iron_ingot"] = 8,

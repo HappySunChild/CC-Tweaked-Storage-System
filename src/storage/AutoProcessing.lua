@@ -1,4 +1,4 @@
-local find = require("utility/find")
+local find = require("storage/utility/find")
 
 local UNKNOWN_PERIPHERAL = 'Unable to find peripheral "%s"'
 local UNKNOWN_PROCESSOR = 'Unable to find processor "%s", did you add it?'
@@ -59,13 +59,14 @@ end
 ---@field input_slots AutoProcessing.PatternItem[] Slots to input items into.
 ---@field output_slots number[] Slots to constantly pull into the system.
 ---@field poll_rate number How frequently the processor checks the output per second.
+---@field label string
 
 ---@class AutoProcessing.Processor
 ---@field patterns AutoProcessing.Pattern[]
 ---@field active boolean
 
 ---@class AutoProcessing
----@field package _processors table<string, AutoProcessing.Processor>
+---@field processors table<string, AutoProcessing.Processor>
 ---@field package _system StorageSystem
 local CLASS = {
 	---Adds a processor to the AutoProcessing manager.
@@ -77,7 +78,7 @@ local CLASS = {
 			error(UNKNOWN_PERIPHERAL:format(proc_name), 2)
 		end
 
-		self._processors[proc_name] = {
+		self.processors[proc_name] = {
 			patterns = patterns,
 			active = false,
 		}
@@ -86,7 +87,54 @@ local CLASS = {
 	---@param self AutoProcessing
 	---@param proc_name string The name of the inventory the processor uses.
 	remove_processor = function(self, proc_name)
-		self._processors[proc_name] = nil
+		self.processors[proc_name] = nil
+	end,
+	---Returns an array of all the processors in the AutoProcessing manager.
+	---@param self AutoProcessing
+	---@return string[]
+	get_processors = function(self)
+		local processors = {}
+
+		for proc_name in next, self.processors do
+			table.insert(processors, proc_name)
+		end
+
+		return processors
+	end,
+
+	---Adds a pattern to a processor.
+	---@param self AutoProcessing
+	---@param proc_name string
+	---@param pattern AutoProcessing.Pattern
+	add_pattern = function(self, proc_name, pattern)
+		local processor = self.processors[proc_name]
+
+		if processor == nil then
+			error(UNKNOWN_PROCESSOR:format(proc_name), 2)
+		end
+
+		if find(processor.patterns, pattern) then
+			return
+		end
+
+		table.insert(processor.patterns, pattern)
+	end,
+	---Removes a pattern from a processor
+	---@param self AutoProcessing
+	---@param proc_name string
+	---@param pattern AutoProcessing.Pattern
+	remove_pattern = function(self, proc_name, pattern)
+		local processor = self.processors[proc_name]
+
+		if processor == nil then
+			error(UNKNOWN_PROCESSOR:format(proc_name), 2)
+		end
+
+		local index = find(processor.patterns, pattern)
+
+		if index then
+			table.remove(processor.patterns, index)
+		end
 	end,
 
 	---Returns whether the specified processor is available.
@@ -94,7 +142,7 @@ local CLASS = {
 	---@param proc_name string The name of the inventory the processor uses.
 	---@return boolean available Where the processor is available.
 	is_processor_available = function(self, proc_name)
-		local processor = self._processors[proc_name]
+		local processor = self.processors[proc_name]
 
 		if processor == nil then
 			error(UNKNOWN_PROCESSOR:format(proc_name))
@@ -109,16 +157,13 @@ local CLASS = {
 	get_available_processors = function(self, item_name)
 		local processors = {}
 
-		for proc_name, processor in next, self._processors do
-			if not self:is_processor_available(proc_name) then
-				goto continue
-			end
-
-			if #get_patterns_with_result(processor, item_name) > 0 then
+		for proc_name, processor in next, self.processors do
+			if
+				self:is_processor_available(proc_name)
+				and #get_patterns_with_result(processor, item_name) > 0
+			then
 				table.insert(processors, proc_name)
 			end
-
-			::continue::
 		end
 
 		return processors
@@ -149,7 +194,7 @@ local CLASS = {
 	---@param pattern AutoProcessing.Pattern The pattern to use with the processor.
 	---@param count integer The number of times to process this pattern on this processor.
 	start_process_async = function(self, proc_name, pattern, count)
-		local processor = self._processors[proc_name]
+		local processor = self.processors[proc_name]
 
 		if processor == nil then
 			error(UNKNOWN_PROCESSOR:format(proc_name), 2)
@@ -190,6 +235,7 @@ local CLASS = {
 			system:update_inventories()
 
 			-- wait for result items back
+			-- should this instead check for items being added into the system?
 			local remaining = output_per_pattern
 
 			while remaining > 0 do
@@ -214,7 +260,7 @@ local METATABLE = { __index = CLASS }
 local function AutoProcessing(system, initial_processors)
 	local new_autoprocessing = setmetatable({
 		_system = system,
-		_processors = {},
+		processors = {},
 	}, METATABLE)
 
 	for inv_name, patterns in next, initial_processors do
