@@ -1,0 +1,23 @@
+{
+	"bundle": {
+		"excludes": [
+			"cc/**"
+		],
+		"require_mode": {
+			"name": "path",
+			"sources": {
+				"storage": "src/storage",
+				"utility": "src/utility"
+			}
+		}
+	},
+	"generator": "dense",
+	"rules": [
+		"remove_types",
+		"compute_expression",
+		{
+			"rule": "rename_variables",
+			"include_functions": true
+		}
+	]
+}

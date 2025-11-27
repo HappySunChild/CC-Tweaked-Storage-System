@@ -1,2 +1,4 @@
 quote_style = "AutoPreferDouble"
 sort_requires = { enabled = true }
+syntax = "Lua52"
+column_width = 100
