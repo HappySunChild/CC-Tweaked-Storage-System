@@ -31,8 +31,14 @@ local function list(choices, title, format_callback, cursor_index)
 			local choice = choices[index]
 			local text = format_callback(tostring(choice), index, cursor)
 
+			if index == cursor then
+				term.setTextColor(colors.lightBlue)
+			end
+
 			term.setCursorPos(1, (index - start_index) + 3)
 			term.write(text)
+
+			term.setTextColor(colors.white)
 		end
 
 		term.setCursorPos(1, height)
@@ -77,11 +83,17 @@ return {
 				local is_selected = index == cursor
 
 				if index == finish_index then
+					term.setTextColor(colors.red)
+
 					return string.format("%s Done", is_selected and ">" or " ")
 				end
 
 				local is_chosen = chosen[index] ~= nil
 				local text = formatter and formatter(choice) or choice
+
+				if is_chosen then
+					term.setTextColor(colors.green)
+				end
 
 				return string.format(
 					"%s [%s] %s",

@@ -3,11 +3,16 @@
 
 local completion = require("cc/completion")
 
-local get_display_name = require("storage/utility/get_display_name")
+local format_name = require("storage/utility/format_name")
 local storage = require("storage/lib")
 
 local filter = require("utility/filter")
 local prompting = require("utility/prompting")
+local yield_for_user = require("utility/yield_for_user")
+
+local EXPORTING_ITEM = "Exporting %d items..."
+local IMPORING_ITEM = "Importing items..."
+local ITEMS_TRANSFERRED = "Transferred %d items."
 
 local modem = peripheral.find("modem") ---@type peripheral.Modem
 
@@ -30,7 +35,7 @@ local io_inventory = nil
 
 if io_inventory == nil or not modem.isPresentRemote(io_inventory) then
 	io_inventory =
-		prompting.choice_list(get_modem_inventories(), "Choose IO Inventory", get_display_name)
+		prompting.choice_list(get_modem_inventories(), "Choose IO Inventory", format_name)
 end
 
 local system_inventories = prompting.checkbox_list(
@@ -38,7 +43,7 @@ local system_inventories = prompting.checkbox_list(
 		return value ~= io_inventory
 	end),
 	"Select System Inventories",
-	get_display_name
+	format_name
 )
 
 local system = storage.StorageSystem(system_inventories)
@@ -46,25 +51,19 @@ local autoprocessing = storage.AutoProcessing(system, {})
 
 local width, height = term.getSize()
 
-local terminal_window =
-	window.create(term.current(), width * 2 / 3, 2, math.ceil(width / 3), height - 2, false)
 local monitor = peripheral.find("monitor") ---@type peripheral.Monitor
 monitor.setTextScale(0.5)
 
-local monitor_display = storage.StorageDisplay(monitor, {
-	column_count = 2,
+local output_window =
+	window.create(term.current(), width * 2 / 3, 2, math.ceil(width / 3), height - 2, false)
+local terminal_window = window.create(term.current(), 1, 1, width, height - 1, false)
 
-	count_justification = 6,
-	index_justification = 4,
-})
-local terminal_display = storage.StorageDisplay(terminal_window, {
-	column_count = 1,
-
-	count_justification = 4,
-	index_justification = 3,
-})
-
-local loaded_patterns = {}
+local monitor_display =
+	storage.StorageDisplay(monitor, { column_count = 2, index_justification = 4 })
+local output_display =
+	storage.StorageDisplay(output_window, { column_count = 1, index_justification = 3 })
+local terminal_display =
+	storage.StorageDisplay(terminal_window, { column_count = 2, index_justification = 3 })
 
 local function reload_patterns()
 	local cur_dir = fs.getDir(shell.getRunningProgram())
@@ -73,7 +72,7 @@ local function reload_patterns()
 	for _, file in ipairs(fs.list(pattern_dir)) do
 		local no_extension = file:gsub("%..*", "")
 
-		loaded_patterns[no_extension] = require("patterns/" .. no_extension)
+		autoprocessing:register_pattern(no_extension, require("patterns/" .. no_extension))
 	end
 end
 
@@ -99,27 +98,15 @@ end
 ---@param partial string
 ---@return string[]
 local function system_autocomplete(partial)
-	local found = {}
-
-	for item_name in next, system:get_system_items() do
-		local _, finish = string.find(item_name, partial)
-
-		if finish ~= nil then
-			table.insert(found, { name = item_name, index = finish })
-		end
-	end
-
-	table.sort(found, function(a, b)
-		return a.index < b.index
-	end)
-
 	local choices = {}
 
-	for _, occurance in ipairs(found) do
-		table.insert(choices, occurance.name:sub(occurance.index, -1))
-	end
+	for item_name in next, system:get_system_items() do
+		local start, _ = string.find(item_name, partial)
 
-	table.insert(choices, "exit")
+		if start ~= nil then
+			table.insert(choices, item_name:sub(start, -1))
+		end
+	end
 
 	return completion.choice(partial, choices, false)
 end
@@ -152,16 +139,35 @@ local function menu(options, title, callback)
 	end
 end
 
+---@param pattern string
+---@return string
+local function format_pattern(pattern)
+	local info = autoprocessing:get_pattern_info(pattern)
+
+	if info == nil then
+		return "UNKNOWN PATTERN"
+	end
+
+	return info.label
+end
+---@return string[]
+local function prompt_patterns()
+	return prompting.checkbox_list(
+		autoprocessing:get_registered_patterns(),
+		"Choose Patterns",
+		format_pattern
+	)
+end
+
 ----------------------------------------------------------------------------------------------------
 
 local function output_prompt()
-	terminal_display:draw_item_cells(system:get_system_items_sorted())
-	terminal_window.setVisible(true)
+	output_window.setVisible(true)
 
 	local function loop()
 		term.clear()
 
-		terminal_window.redraw()
+		output_window.redraw()
 
 		local item_input = prompting.text_page(
 			"Storage System Output",
@@ -185,20 +191,19 @@ local function output_prompt()
 		if target_item == nil then
 			printError(string.format("Unable to find '%s'", item_input))
 
-			os.pullEvent("key")
-			os.pullEvent("key_up")
+			yield_for_user()
 
 			return false
 		end
 
 		term.clear()
 
-		terminal_window.redraw()
+		output_window.redraw()
 
 		local count_input = prompting.text_page(
 			string.format(
 				"Item Count - %s | %d in system",
-				get_display_name(target_item),
+				format_name(target_item),
 				system_items[target_item]
 			),
 			"'cancel' to restart"
@@ -209,18 +214,23 @@ local function output_prompt()
 		end
 
 		local count = tonumber(count_input) or 64
+
+		print(EXPORTING_ITEM:format(count))
+
 		local transferred = system:export_item(target_item, io_inventory, nil, count)
 
-		print(string.format("Successfully transferred %d items.", transferred))
+		print(ITEMS_TRANSFERRED:format(transferred))
 
-		os.pullEvent("key")
-		os.pullEvent("key_up")
+		yield_for_user()
 	end
 
-	while not loop() do
+	while true do
+		if loop() then
+			break
+		end
 	end
 
-	terminal_window.setVisible(false)
+	output_window.setVisible(false)
 end
 local function input_prompt()
 	local _, index =
@@ -233,43 +243,33 @@ local function input_prompt()
 	term.clear()
 	term.setCursorPos(1, 1)
 
-	print("Importing...")
+	print(IMPORING_ITEM)
 
 	local transferred = system:import_inventory(io_inventory)
 
-	print(string.format("Successfully transferred %d items.", transferred))
+	print(ITEMS_TRANSFERRED:format(transferred))
 
-	os.pullEvent("key")
-	os.pullEvent("key_up")
+	yield_for_user()
+end
+local function show_display()
+	term.clear()
+	term.setCursorPos(1, height)
+	term.write("Press any key to return")
+
+	terminal_window.setVisible(true)
+
+	yield_for_user()
+
+	terminal_window.setVisible(false)
 end
 
----@return AutoProcessing.Pattern[]
-local function prompt_patterns()
-	local list = {}
-
-	for name in next, loaded_patterns do
-		table.insert(list, name)
-	end
-
-	local chosen = prompting.checkbox_list(list, "Choose Patterns", function(choice)
-		return choice .. ".lua"
-	end)
-
-	local patterns = {}
-
-	for _, name in next, chosen do
-		table.insert(patterns, loaded_patterns[name])
-	end
-
-	return patterns
-end
 ---@param processors string[]
 local function add_patterns(processors)
 	local patterns = prompt_patterns()
 
 	for _, proc_name in ipairs(processors) do
 		for _, pattern in ipairs(patterns) do
-			autoprocessing:add_pattern(proc_name, pattern)
+			autoprocessing:add_pattern_to_processor(proc_name, pattern)
 		end
 	end
 end
@@ -279,21 +279,25 @@ local function remove_patterns(processors)
 
 	for _, proc_name in ipairs(processors) do
 		for _, pattern in ipairs(patterns) do
-			autoprocessing:remove_pattern(proc_name, pattern)
+			autoprocessing:remove_pattern_from_processor(proc_name, pattern)
 		end
 	end
 end
 ---@param processors string[]
 local function pattern_menu(processors)
-	local MENU_CHOICES = { "Add Patterns", "Remove Patterns" }
+	local MENU_CHOICES = { "Add patterns", "Remove patterns" }
 
-	menu(MENU_CHOICES, "Patterns", function(index)
-		if index == 1 then
-			add_patterns(processors)
-		else
-			remove_patterns(processors)
+	menu(
+		MENU_CHOICES,
+		string.format("Processor Patterns | %d Selected", #processors),
+		function(index)
+			if index == 1 then
+				add_patterns(processors)
+			else
+				remove_patterns(processors)
+			end
 		end
-	end)
+	)
 end
 
 local function configure_processors()
@@ -302,16 +306,15 @@ local function configure_processors()
 	if #processors <= 0 then
 		term.clear()
 		term.setCursorPos(1, 1)
-		term.write("No processors detected.")
+		term.write("No processors have been registered!")
 
-		os.pullEvent("key")
-		os.pullEvent("key_up")
+		yield_for_user()
 
 		return
 	end
 
 	local selected_processors =
-		prompting.checkbox_list(processors, "Select Processors", get_display_name)
+		prompting.checkbox_list(processors, "Select processors to configure", format_name)
 
 	if #selected_processors == 0 then
 		return
@@ -319,19 +322,19 @@ local function configure_processors()
 
 	pattern_menu(selected_processors)
 end
-local function add_processor()
+local function register_processor()
 	local choices =
-		prompting.checkbox_list(get_free_inventories(), "Add Processors", get_display_name)
+		prompting.checkbox_list(get_free_inventories(), "Register Processors", format_name)
 
 	for _, proc_name in ipairs(choices) do
 		autoprocessing:add_processor(proc_name, {})
 	end
 end
-local function remove_processor()
+local function deregister_processor()
 	local choices = prompting.checkbox_list(
 		autoprocessing:get_processors(),
-		"Remove Processors",
-		get_display_name
+		"Deregister Processors",
+		format_name
 	)
 
 	for _, proc_name in ipairs(choices) do
@@ -340,23 +343,91 @@ local function remove_processor()
 end
 local function processors_menu()
 	menu(
-		{ "Configure Processor", "Add Processor", "Remove Processor" },
-		"Processors",
+		{ "Configure patterns", "Register", "Deregister" },
+		"Processor Inventories",
 		function(index)
 			if index == 1 then
 				configure_processors()
 			elseif index == 2 then
-				add_processor()
+				register_processor()
 			elseif index == 3 then
-				remove_processor()
+				deregister_processor()
 			end
 		end
 	)
 end
 
+---@class ProcessingJob
+---@field processor string
+---@field pattern string
+---@field count integer
+
+local function craft()
+	local pattern = prompting.choice_list(
+		autoprocessing:get_registered_patterns(),
+		"Choose Pattern",
+		format_pattern
+	)
+	local available_processors = autoprocessing:get_available_processors(pattern)
+
+	if #available_processors == 0 then
+		term.clear()
+		term.setCursorPos(1, 1)
+		term.write("No available processors have this pattern!")
+
+		yield_for_user()
+
+		return
+	end
+
+	term.clear()
+
+	local iterations = tonumber(
+		prompting.text_page(string.format("Process Iterations | %s", format_pattern(pattern)))
+	) or 1
+
+	if iterations == 0 then
+		return
+	end
+
+	local chosen_processors = prompting.checkbox_list(
+		available_processors,
+		string.format("Select Processor Distribution | %dx %s", iterations, format_pattern(pattern)),
+		format_name
+	)
+
+	if #chosen_processors == 0 then
+		return
+	end
+
+	local tasks_per_processor = math.floor(iterations / #chosen_processors)
+	local extra_tasks = iterations % #chosen_processors
+
+	local jobs = {}
+
+	for _, proc_name in ipairs(chosen_processors) do
+		local extra = 0
+
+		if extra_tasks > 0 then
+			extra_tasks = extra_tasks - 1
+
+			extra = 1
+		end
+
+		table.insert(jobs, {
+			processor = proc_name,
+			pattern = pattern,
+			count = tasks_per_processor + extra,
+		})
+	end
+
+	os.queueEvent("start_processing", jobs)
+end
+
 local function auto_processing_menu()
-	menu({ "Craft", "Processors" }, "Auto Processing Menu", function(index)
+	menu({ "Craft", "Processor inventories" }, "Auto Processing Menu", function(index)
 		if index == 1 then
+			craft()
 		elseif index == 2 then
 			processors_menu()
 		end
@@ -367,15 +438,17 @@ end
 
 local function io_menu()
 	menu(
-		{ "Output from Storage", "Input to Storage", "Auto Processing" },
+		{ "Storage output", "Storage input", "Processing", "View chart" },
 		"Storage IO Menu",
-		function(index, choice)
+		function(index)
 			if index == 1 then
 				output_prompt()
 			elseif index == 2 then
 				input_prompt()
 			elseif index == 3 then
 				auto_processing_menu()
+			elseif index == 4 then
+				show_display()
 			end
 		end
 	)
@@ -386,9 +459,18 @@ end
 
 local function auto_processing_manager()
 	while true do
-		local _, info = os.pullEvent("processing_job")
+		local _, jobs = os.pullEvent("start_processing") ---@type string, ProcessingJob[]
+		local tasks = {}
 
-		print(info)
+		for _, job in ipairs(jobs) do
+			local runner = function()
+				autoprocessing:start_process_async(job.processor, job.pattern, job.count)
+			end
+
+			table.insert(tasks, runner)
+		end
+
+		parallel.waitForAll(table.unpack(tasks))
 	end
 end
 
@@ -396,7 +478,15 @@ local function periodic_update()
 	while true do
 		system:update_inventories()
 
-		monitor_display:draw_item_cells(system:get_system_items_sorted())
+		local x, y = term.getCursorPos()
+
+		local items = system:get_system_items_sorted()
+
+		output_display:draw_item_cells(items)
+		terminal_display:draw_item_cells(items)
+		monitor_display:draw_item_cells(items)
+
+		term.setCursorPos(x, y)
 
 		sleep(5)
 	end

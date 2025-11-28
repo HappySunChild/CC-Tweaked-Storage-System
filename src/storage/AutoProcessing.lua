@@ -2,13 +2,14 @@ local find = require("storage/utility/find")
 
 local UNKNOWN_PERIPHERAL = 'Unable to find peripheral "%s"'
 local UNKNOWN_PROCESSOR = 'Unable to find processor "%s", did you add it?'
+local UNKNOWN_PATTERN = 'Unable to find pattern "%s", did you register it?'
 local PATTERN_NOT_SUPPORED = 'Processor "%s" does not support this pattern!'
 local PROCESSOR_BUSY = 'Processor "%s" is busy!'
 
 ---Returns a list of patterns that can produce the specified item.
 ---@param processor AutoProcessing.Processor
 ---@param item_name string
----@return AutoProcessing.Pattern[]
+---@return AutoProcessing.PatternInfo[]
 local function get_patterns_with_result(processor, item_name)
 	local patterns = {}
 
@@ -22,7 +23,7 @@ local function get_patterns_with_result(processor, item_name)
 end
 
 ---Returns a dictionary of ingredients needed to produce a pattern.
----@param pattern AutoProcessing.Pattern
+---@param pattern AutoProcessing.PatternInfo
 ---@param iterations integer
 ---@return table<string, integer>
 local function get_pattern_ingredients(pattern, iterations)
@@ -38,7 +39,7 @@ local function get_pattern_ingredients(pattern, iterations)
 end
 
 ---comment
----@param pattern AutoProcessing.Pattern
+---@param pattern AutoProcessing.PatternInfo
 ---@return integer count
 local function get_pattern_output_count(pattern)
 	local total_count = 0
@@ -54,7 +55,7 @@ end
 ---@field [1] integer
 ---@field [2] string
 
----@class AutoProcessing.Pattern
+---@class AutoProcessing.PatternInfo
 ---@field results table<string, integer>
 ---@field input_slots AutoProcessing.PatternItem[] Slots to input items into.
 ---@field output_slots number[] Slots to constantly pull into the system.
@@ -62,17 +63,18 @@ end
 ---@field label string
 
 ---@class AutoProcessing.Processor
----@field patterns AutoProcessing.Pattern[]
----@field active boolean
+---@field patterns string[]
+---@field in_use boolean
 
 ---@class AutoProcessing
 ---@field processors table<string, AutoProcessing.Processor>
+---@field package _patterns table<string, AutoProcessing.PatternInfo>
 ---@field package _system StorageSystem
 local CLASS = {
 	---Adds a processor to the AutoProcessing manager.
 	---@param self AutoProcessing
 	---@param proc_name string The name of the inventory the processor uses.
-	---@param patterns AutoProcessing.Pattern[] All of the patterns this processor supports.
+	---@param patterns string[] All of the patterns this processor supports.
 	add_processor = function(self, proc_name, patterns)
 		if not peripheral.isPresent(proc_name) then
 			error(UNKNOWN_PERIPHERAL:format(proc_name), 2)
@@ -80,7 +82,7 @@ local CLASS = {
 
 		self.processors[proc_name] = {
 			patterns = patterns,
-			active = false,
+			in_use = false,
 		}
 	end,
 	---Removes a processor from the AutoProcessing manager
@@ -102,11 +104,44 @@ local CLASS = {
 		return processors
 	end,
 
+	---Registers a pattern.
+	---@param self AutoProcessing
+	---@param pattern string
+	---@param info AutoProcessing.PatternInfo
+	register_pattern = function(self, pattern, info)
+		self._patterns[pattern] = info
+	end,
+	---Deregisters a pattern.
+	---@param self AutoProcessing
+	---@param pattern string
+	deregister_pattern = function(self, pattern)
+		self._patterns[pattern] = nil
+	end,
+	---Returns an array of all registers patterns.
+	---@param self AutoProcessing
+	---@return string[]
+	get_registered_patterns = function(self)
+		local list = {}
+
+		for name in next, self._patterns do
+			table.insert(list, name)
+		end
+
+		return list
+	end,
+	---Returns the info of the pattern if it has been registered, otherwise it returns nil.
+	---@param self AutoProcessing
+	---@param pattern string
+	---@return AutoProcessing.PatternInfo?
+	get_pattern_info = function(self, pattern)
+		return self._patterns[pattern]
+	end,
+
 	---Adds a pattern to a processor.
 	---@param self AutoProcessing
 	---@param proc_name string
-	---@param pattern AutoProcessing.Pattern
-	add_pattern = function(self, proc_name, pattern)
+	---@param pattern string
+	add_pattern_to_processor = function(self, proc_name, pattern)
 		local processor = self.processors[proc_name]
 
 		if processor == nil then
@@ -119,11 +154,11 @@ local CLASS = {
 
 		table.insert(processor.patterns, pattern)
 	end,
-	---Removes a pattern from a processor
+	---Removes a pattern from a processor.
 	---@param self AutoProcessing
 	---@param proc_name string
-	---@param pattern AutoProcessing.Pattern
-	remove_pattern = function(self, proc_name, pattern)
+	---@param pattern string
+	remove_pattern_from_processor = function(self, proc_name, pattern)
 		local processor = self.processors[proc_name]
 
 		if processor == nil then
@@ -148,20 +183,17 @@ local CLASS = {
 			error(UNKNOWN_PROCESSOR:format(proc_name))
 		end
 
-		return not processor.active
+		return not processor.in_use
 	end,
 	---Returns all available processors that are able to produce the specified item.
 	---@param self AutoProcessing
-	---@param item_name string The name of the item to search with.
+	---@param pattern string The name of the item to search with.
 	---@return string[] processors A list of names for available processors.
-	get_available_processors = function(self, item_name)
+	get_available_processors = function(self, pattern)
 		local processors = {}
 
 		for proc_name, processor in next, self.processors do
-			if
-				self:is_processor_available(proc_name)
-				and #get_patterns_with_result(processor, item_name) > 0
-			then
+			if self:is_processor_available(proc_name) and find(processor.patterns, pattern) then
 				table.insert(processors, proc_name)
 			end
 		end
@@ -171,14 +203,15 @@ local CLASS = {
 
 	---Returns an array of all the missing ingredients in the system for the specified pattern.
 	---@param self AutoProcessing
-	---@param pattern AutoProcessing.Pattern
+	---@param pattern_info AutoProcessing.PatternInfo
 	---@param count integer
 	---@return string[] missing
-	get_missing_ingredients = function(self, pattern, count)
+	get_missing_ingredients = function(self, pattern_info, count)
 		local system_items = self._system:get_system_items()
+
 		local missing = {}
 
-		for ingr_name, ingr_count in next, get_pattern_ingredients(pattern, count) do
+		for ingr_name, ingr_count in next, get_pattern_ingredients(pattern_info, count) do
 			local system_count = system_items[ingr_name]
 
 			if system_count == nil or system_count < ingr_count then
@@ -191,7 +224,7 @@ local CLASS = {
 
 	---@param self AutoProcessing
 	---@param proc_name string The name of the processor to use.
-	---@param pattern AutoProcessing.Pattern The pattern to use with the processor.
+	---@param pattern string The pattern to use with the processor.
 	---@param count integer The number of times to process this pattern on this processor.
 	start_process_async = function(self, proc_name, pattern, count)
 		local processor = self.processors[proc_name]
@@ -200,7 +233,7 @@ local CLASS = {
 			error(UNKNOWN_PROCESSOR:format(proc_name), 2)
 		end
 
-		if processor.active then
+		if processor.in_use then
 			error(PROCESSOR_BUSY:format(proc_name), 2)
 		end
 
@@ -208,21 +241,23 @@ local CLASS = {
 			error(PATTERN_NOT_SUPPORED:format(proc_name), 2)
 		end
 
+		local pattern_info = self._patterns[pattern]
+
 		local system = self._system
 
-		local poll_duration = 1 / pattern.poll_rate
-		local output_per_pattern = get_pattern_output_count(pattern)
+		local poll_duration = 1 / pattern_info.poll_rate
+		local output_per_pattern = get_pattern_output_count(pattern_info)
 
-		local low_items = self:get_missing_ingredients(pattern, count)
+		local low_items = self:get_missing_ingredients(pattern_info, count)
 
 		if #low_items > 0 then
 			error(table.concat(low_items, ", ")) -- change this
 		end
 
-		local input_slots = pattern.input_slots
-		local output_slots = pattern.output_slots
+		local input_slots = pattern_info.input_slots
+		local output_slots = pattern_info.output_slots
 
-		processor.active = true
+		processor.in_use = true
 
 		for _ = 1, count do
 			-- input ingredients into slots
@@ -249,17 +284,18 @@ local CLASS = {
 			end
 		end
 
-		processor.active = false
+		processor.in_use = false
 	end,
 }
 local METATABLE = { __index = CLASS }
 
 ---@param system StorageSystem
----@param initial_processors table<string, AutoProcessing.Pattern[]>
+---@param initial_processors table<string, AutoProcessing.PatternInfo[]>
 ---@return AutoProcessing
 local function AutoProcessing(system, initial_processors)
 	local new_autoprocessing = setmetatable({
 		_system = system,
+		_patterns = {},
 		processors = {},
 	}, METATABLE)
 

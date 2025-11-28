@@ -1,5 +1,5 @@
 local abbreviate = require("storage/utility/abbreviate")
-local get_display_name = require("storage/utility/get_display_name")
+local format_name = require("storage/utility/format_name")
 local justify = require("storage/utility/justify")
 local paint = require("storage/utility/paint")
 local truncate = require("storage/utility/truncate")
@@ -67,7 +67,7 @@ local CLASS = {
 				name_width = name_width + extra_width -- make the edge a little longer if there's an edge
 			end
 
-			local item_name = justify(truncate(get_display_name(item.name), name_width), name_width)
+			local item_name = justify(truncate(format_name(item.name), name_width), name_width)
 
 			screen.setCursorPos(x, row)
 			screen.blit(paint(item_index, index_blit, background_blit))
