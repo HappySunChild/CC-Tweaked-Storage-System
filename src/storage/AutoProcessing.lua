@@ -290,7 +290,7 @@ local CLASS = {
 local METATABLE = { __index = CLASS }
 
 ---@param system StorageSystem
----@param initial_processors table<string, AutoProcessing.PatternInfo[]>
+---@param initial_processors table<string, string[]>
 ---@return AutoProcessing
 local function AutoProcessing(system, initial_processors)
 	local new_autoprocessing = setmetatable({

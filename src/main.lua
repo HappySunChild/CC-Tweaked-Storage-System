@@ -10,6 +10,10 @@ local filter = require("utility/filter")
 local prompting = require("utility/prompting")
 local yield_for_user = require("utility/yield_for_user")
 
+local SETTING_IO_INVENTORY = "storage.io_inv"
+local SETTING_SYSTEM_INVENTORIES = "storage.system_invs"
+local SETTING_PROCESSORS = "storage.processors"
+
 local EXPORTING_ITEM = "Exporting %d items..."
 local IMPORING_ITEM = "Importing items..."
 local ITEMS_TRANSFERRED = "Transferred %d items."
@@ -31,23 +35,34 @@ local function get_modem_inventories()
 	return inventories
 end
 
-local io_inventory = nil
+settings.load()
+
+local io_inventory = settings.get(SETTING_IO_INVENTORY)
+local system_inventories = settings.get(SETTING_SYSTEM_INVENTORIES)
 
 if io_inventory == nil or not modem.isPresentRemote(io_inventory) then
 	io_inventory =
 		prompting.choice_list(get_modem_inventories(), "Choose IO Inventory", format_name)
+
+	settings.set(SETTING_IO_INVENTORY, io_inventory)
+	settings.save()
 end
 
-local system_inventories = prompting.checkbox_list(
-	filter(get_modem_inventories(), function(_, value)
-		return value ~= io_inventory
-	end),
-	"Select System Inventories",
-	format_name
-)
+if system_inventories == nil then
+	system_inventories = prompting.checkbox_list(
+		filter(get_modem_inventories(), function(_, value)
+			return value ~= io_inventory
+		end),
+		"Select System Inventories",
+		format_name
+	)
+
+	settings.set(SETTING_SYSTEM_INVENTORIES, system_inventories)
+	settings.save()
+end
 
 local system = storage.StorageSystem(system_inventories)
-local autoprocessing = storage.AutoProcessing(system, {})
+local autoprocessing = storage.AutoProcessing(system, settings.get(SETTING_PROCESSORS, {}))
 
 local width, height = term.getSize()
 
@@ -157,6 +172,17 @@ local function prompt_patterns()
 		"Choose Patterns",
 		format_pattern
 	)
+end
+
+local function update_autoprocessing_setting()
+	local processors = {}
+
+	for proc_name, info in next, autoprocessing.processors do
+		processors[proc_name] = info.patterns
+	end
+
+	settings.set(SETTING_PROCESSORS, processors)
+	settings.save()
 end
 
 ----------------------------------------------------------------------------------------------------
@@ -321,6 +347,8 @@ local function configure_processors()
 	end
 
 	pattern_menu(selected_processors)
+
+	update_autoprocessing_setting()
 end
 local function register_processor()
 	local choices =
@@ -329,6 +357,8 @@ local function register_processor()
 	for _, proc_name in ipairs(choices) do
 		autoprocessing:add_processor(proc_name, {})
 	end
+
+	update_autoprocessing_setting()
 end
 local function deregister_processor()
 	local choices = prompting.checkbox_list(
@@ -340,6 +370,8 @@ local function deregister_processor()
 	for _, proc_name in ipairs(choices) do
 		autoprocessing:remove_processor(proc_name)
 	end
+
+	update_autoprocessing_setting()
 end
 local function processors_menu()
 	menu(

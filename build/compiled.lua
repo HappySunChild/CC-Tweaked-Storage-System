@@ -143,78 +143,83 @@ cache.m=c end return c.c end end do local function b()local function c()os.
 pullEvent('key')os.pullEvent('key_up')end return c end function a.n()local c=a.
 cache.n if not c then c={c=b()}a.cache.n=c end return c.c end end end local b=
 require('cc/completion')local c=a.a()local d=a.j()local e=a.k()local f=a.m()
-local g=a.n()local h='Exporting %d items...'local i='Importing items...'local j=
-'Transferred %d items.'local k=peripheral.find('modem')local function l()local m
-={}for n,o in ipairs(k.getNamesRemote())do if peripheral.hasType(o,'inventory')
-then table.insert(m,o)end end table.sort(m)return m end local m=nil if m==nil or
-not k.isPresentRemote(m)then m=f.choice_list(l(),'Choose IO Inventory',c)end
-local n=f.checkbox_list(e(l(),function(n,o)return o~=m end),
-'Select System Inventories',c)local o=d.StorageSystem(n)local p=d.
-AutoProcessing(o,{})local q,r=term.getSize()local s=peripheral.find('monitor')s.
-setTextScale(0.5)local t=window.create(term.current(),q*2/3,2,math.ceil(q/3),r-2
-,false)local u=window.create(term.current(),1,1,q,r-1,false)local v=d.
-StorageDisplay(s,{column_count=2,index_justification=4})local w=d.
-StorageDisplay(t,{column_count=1,index_justification=3})local x=d.
-StorageDisplay(u,{column_count=2,index_justification=3})local function y()local
-z=fs.getDir(shell.getRunningProgram())local A=fs.combine(z,'patterns')for B,C in
-ipairs(fs.list(A))do local D=C:gsub('%..*','')p:register_pattern(D,require(
-'patterns/'..D))end end local function z(A,B)local C=nil local D=math.huge for E
-,F in ipairs(A)do local G=string.find(F,B)if G and G<D then D=G C=F end end
-return C end local function A(B)local C={}for D in next,o:get_system_items()do
-local E,F=string.find(D,B)if E~=nil then table.insert(C,D:sub(E,-1))end end
-return b.choice(B,C,false)end local function B()return e(l(),function(C,D)return
-not(D==m or o.inventories[D]~=nil or p.processors[D]~=nil)end)end local function
-C(D,E,F)table.insert(D,'Exit')while true do local G,H=f.choice_list(D,E)if H==#D
-then break end F(H,G)end end local function D(E)local F=p:get_pattern_info(E)if
-F==nil then return'UNKNOWN PATTERN'end return F.label end local function E()
-return f.checkbox_list(p:get_registered_patterns(),'Choose Patterns',D)end
-local function F()t.setVisible(true)local function G()term.clear()t.redraw()
-local H=f.text_page('Storage System Output',"'exit' to return to menu",A)if H==
-'exit'then return true end local I=o:get_system_items()local J={}for K in next,I
-do table.insert(J,K)end local K=z(J,H)if K==nil then printError(string.format(
-"Unable to find '%s'",H))g()return false end term.clear()t.redraw()local L=f.
-text_page(string.format('Item Count - %s | %d in system',c(K),I[K]),
-"'cancel' to restart")if L=='cancel'then return false end local M=tonumber(L)or
-64 print(h:format(M))local N=o:export_item(K,m,nil,M)print(j:format(N))g()end
-while true do if G()then break end end t.setVisible(false)end local function G()
-local H,I=f.choice_list({'yesss!!!!!!','wait nvm'},
-'Storage System Input - Are you sure?')if I==2 then return end term.clear()term.
-setCursorPos(1,1)print(i)local J=o:import_inventory(m)print(j:format(J))g()end
-local function H()term.clear()term.setCursorPos(1,r)term.write(
-'Press any key to return')u.setVisible(true)g()u.setVisible(false)end
-local function I(J)local K=E()for L,M in ipairs(J)do for N,O in ipairs(K)do p:
-add_pattern_to_processor(M,O)end end end local function J(K)local L=E()for M,N
-in ipairs(K)do for O,P in ipairs(L)do p:remove_pattern_from_processor(N,P)end
-end end local function K(L)local M={'Add patterns','Remove patterns'}C(M,string.
-format('Processor Patterns | %d Selected',#L),function(N)if N==1 then I(L)else
-J(L)end end)end local function L()local M=p:get_processors()if#M<=0 then term.
+local g=a.n()local h='storage.io_inv'local i='storage.system_invs'local j=
+'storage.processors'local k='Exporting %d items...'local l='Importing items...'
+local m='Transferred %d items.'local n=peripheral.find('modem')local function o(
+)local p={}for q,r in ipairs(n.getNamesRemote())do if peripheral.hasType(r,
+'inventory')then table.insert(p,r)end end table.sort(p)return p end settings.
+load()local p=settings.get(h)local q=settings.get(i)if p==nil or not n.
+isPresentRemote(p)then p=f.choice_list(o(),'Choose IO Inventory',c)settings.set(
+h,p)settings.save()end if q==nil then q=f.checkbox_list(e(o(),function(r,s)
+return s~=p end),'Select System Inventories',c)settings.set(i,q)settings.save()
+end local r=d.StorageSystem(q)local s=d.AutoProcessing(r,settings.get(j,{}))
+local t,u=term.getSize()local v=peripheral.find('monitor')v.setTextScale(0.5)
+local w=window.create(term.current(),t*2/3,2,math.ceil(t/3),u-2,false)local x=
+window.create(term.current(),1,1,t,u-1,false)local y=d.StorageDisplay(v,{
+column_count=2,index_justification=4})local z=d.StorageDisplay(w,{column_count=1
+,index_justification=3})local A=d.StorageDisplay(x,{column_count=2,
+index_justification=3})local function B()local C=fs.getDir(shell.
+getRunningProgram())local D=fs.combine(C,'patterns')for E,F in ipairs(fs.list(D)
+)do local G=F:gsub('%..*','')s:register_pattern(G,require('patterns/'..G))end
+end local function C(D,E)local F=nil local G=math.huge for H,I in ipairs(D)do
+local J=string.find(I,E)if J and J<G then G=J F=I end end return F end
+local function D(E)local F={}for G in next,r:get_system_items()do local H,I=
+string.find(G,E)if H~=nil then table.insert(F,G:sub(H,-1))end end return b.
+choice(E,F,false)end local function E()return e(o(),function(F,G)return not(G==p
+or r.inventories[G]~=nil or s.processors[G]~=nil)end)end local function F(G,H,I)
+table.insert(G,'Exit')while true do local J,K=f.choice_list(G,H)if K==#G then
+break end I(K,J)end end local function G(H)local I=s:get_pattern_info(H)if I==
+nil then return'UNKNOWN PATTERN'end return I.label end local function H()return
+f.checkbox_list(s:get_registered_patterns(),'Choose Patterns',G)end
+local function I()local J={}for K,L in next,s.processors do J[K]=L.patterns end
+settings.set(j,J)settings.save()end local function J()w.setVisible(true)
+local function K()term.clear()w.redraw()local L=f.text_page(
+'Storage System Output',"'exit' to return to menu",D)if L=='exit'then return
+true end local M=r:get_system_items()local N={}for O in next,M do table.insert(N
+,O)end local O=C(N,L)if O==nil then printError(string.format(
+"Unable to find '%s'",L))g()return false end term.clear()w.redraw()local P=f.
+text_page(string.format('Item Count - %s | %d in system',c(O),M[O]),
+"'cancel' to restart")if P=='cancel'then return false end local Q=tonumber(P)or
+64 print(k:format(Q))local R=r:export_item(O,p,nil,Q)print(m:format(R))g()end
+while true do if K()then break end end w.setVisible(false)end local function K()
+local L,M=f.choice_list({'yesss!!!!!!','wait nvm'},
+'Storage System Input - Are you sure?')if M==2 then return end term.clear()term.
+setCursorPos(1,1)print(l)local N=r:import_inventory(p)print(m:format(N))g()end
+local function L()term.clear()term.setCursorPos(1,u)term.write(
+'Press any key to return')x.setVisible(true)g()x.setVisible(false)end
+local function M(N)local O=H()for P,Q in ipairs(N)do for R,S in ipairs(O)do s:
+add_pattern_to_processor(Q,S)end end end local function N(O)local P=H()for Q,R
+in ipairs(O)do for S,T in ipairs(P)do s:remove_pattern_from_processor(R,T)end
+end end local function O(P)local Q={'Add patterns','Remove patterns'}F(Q,string.
+format('Processor Patterns | %d Selected',#P),function(R)if R==1 then M(P)else
+N(P)end end)end local function P()local Q=s:get_processors()if#Q<=0 then term.
 clear()term.setCursorPos(1,1)term.write('No processors have been registered!')g(
-)return end local N=f.checkbox_list(M,'Select processors to configure',c)if#N==0
-then return end K(N)end local function M()local N=f.checkbox_list(B(),
-'Register Processors',c)for O,P in ipairs(N)do p:add_processor(P,{})end end
-local function N()local O=f.checkbox_list(p:get_processors(),
-'Deregister Processors',c)for P,Q in ipairs(O)do p:remove_processor(Q)end end
-local function O()C({'Configure patterns','Register','Deregister'},
-'Processor Inventories',function(P)if P==1 then L()elseif P==2 then M()elseif P
-==3 then N()end end)end local function P()local Q=f.choice_list(p:
-get_registered_patterns(),'Choose Pattern',D)local R=p:get_available_processors(
-Q)if#R==0 then term.clear()term.setCursorPos(1,1)term.write(
-'No available processors have this pattern!')g()return end term.clear()local S=
-tonumber(f.text_page(string.format('Process Iterations | %s',D(Q))))or 1 if S==0
-then return end local T=f.checkbox_list(R,string.format(
-'Select Processor Distribution | %dx %s',S,D(Q)),c)if#T==0 then return end local
-U=math.floor(S/#T)local V=S%#T local W={}for X,Y in ipairs(T)do local Z=0 if V>0
-then V=V-1 Z=1 end table.insert(W,{processor=Y,pattern=Q,count=U+Z})end os.
-queueEvent('start_processing',W)end local function Q()C({'Craft',
-'Processor inventories'},'Auto Processing Menu',function(R)if R==1 then P()
-elseif R==2 then O()end end)end local function R()C({'Storage output',
-'Storage input','Processing','View chart'},'Storage IO Menu',function(S)if S==1
-then F()elseif S==2 then G()elseif S==3 then Q()elseif S==4 then H()end end)term
-.clear()term.setCursorPos(1,1)end local function S()while true do local T,U=os.
-pullEvent('start_processing')local V={}for W,X in ipairs(U)do local Y=function()
-p:start_process_async(X.processor,X.pattern,X.count)end table.insert(V,Y)end
-parallel.waitForAll(table.unpack(V))end end local function T()while true do o:
-update_inventories()local U,V=term.getCursorPos()local W=o:
-get_system_items_sorted()w:draw_item_cells(W)x:draw_item_cells(W)v:
-draw_item_cells(W)term.setCursorPos(U,V)sleep(5)end end y()parallel.waitForAny(R
-,S,T)
+)return end local R=f.checkbox_list(Q,'Select processors to configure',c)if#R==0
+then return end O(R)I()end local function Q()local R=f.checkbox_list(E(),
+'Register Processors',c)for S,T in ipairs(R)do s:add_processor(T,{})end I()end
+local function R()local S=f.checkbox_list(s:get_processors(),
+'Deregister Processors',c)for T,U in ipairs(S)do s:remove_processor(U)end I()end
+local function S()F({'Configure patterns','Register','Deregister'},
+'Processor Inventories',function(T)if T==1 then P()elseif T==2 then Q()elseif T
+==3 then R()end end)end local function T()local U=f.choice_list(s:
+get_registered_patterns(),'Choose Pattern',G)local V=s:get_available_processors(
+U)if#V==0 then term.clear()term.setCursorPos(1,1)term.write(
+'No available processors have this pattern!')g()return end term.clear()local W=
+tonumber(f.text_page(string.format('Process Iterations | %s',G(U))))or 1 if W==0
+then return end local X=f.checkbox_list(V,string.format(
+'Select Processor Distribution | %dx %s',W,G(U)),c)if#X==0 then return end local
+Y=math.floor(W/#X)local Z=W%#X local _={}for aa,ab in ipairs(X)do local ac=0 if
+Z>0 then Z=Z-1 ac=1 end table.insert(_,{processor=ab,pattern=U,count=Y+ac})end
+os.queueEvent('start_processing',_)end local function aa()F({'Craft',
+'Processor inventories'},'Auto Processing Menu',function(ab)if ab==1 then T()
+elseif ab==2 then S()end end)end local function ab()F({'Storage output',
+'Storage input','Processing','View chart'},'Storage IO Menu',function(ac)if ac==
+1 then J()elseif ac==2 then K()elseif ac==3 then aa()elseif ac==4 then L()end
+end)term.clear()term.setCursorPos(1,1)end local function ac()while true do local
+U,V=os.pullEvent('start_processing')local W={}for X,Y in ipairs(V)do local Z=
+function()s:start_process_async(Y.processor,Y.pattern,Y.count)end table.insert(W
+,Z)end parallel.waitForAll(table.unpack(W))end end local function U()while true
+do r:update_inventories()local V,W=term.getCursorPos()local X=r:
+get_system_items_sorted()z:draw_item_cells(X)A:draw_item_cells(X)y:
+draw_item_cells(X)term.setCursorPos(V,W)sleep(5)end end B()parallel.waitForAny(
+ab,ac,U)
