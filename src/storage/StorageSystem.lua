@@ -201,7 +201,7 @@ local CLASS = {
 
 			total_transferred = total_transferred + transferred
 
-			if count == nil or total_transferred >= count then
+			if count ~= nil and total_transferred >= count then
 				break
 			end
 
@@ -211,6 +211,8 @@ local CLASS = {
 				if current_inv == nil then -- system is entirely full, break out of loop
 					break
 				end
+			elseif count == nil then
+				break
 			end
 		end
 
