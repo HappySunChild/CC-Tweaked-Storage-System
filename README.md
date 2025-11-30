@@ -8,7 +8,7 @@ It may work in older versions, but most likely not.
 
 ## Downloading
 This program can be downloaded by running this command: <br/>
-`wget [LINK TBD]`
+`wget https://github.com/HappySunChild/CC-Tweaked-Storage-System/blob/main/build/compiled.lua storagesystem.lua`
 
 ## Requirements
 1. Monitors (Advanced preferably)
