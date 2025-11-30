@@ -290,7 +290,7 @@ local CLASS = {
 local METATABLE = { __index = CLASS }
 
 ---@param system StorageSystem
----@param initial_processors table<string, string[]>
+---@param initial_processors? table<string, string[]>
 ---@return AutoProcessing
 local function AutoProcessing(system, initial_processors)
 	local new_autoprocessing = setmetatable({
@@ -299,8 +299,10 @@ local function AutoProcessing(system, initial_processors)
 		processors = {},
 	}, METATABLE)
 
-	for inv_name, patterns in next, initial_processors do
-		new_autoprocessing:add_processor(inv_name, patterns)
+	if initial_processors ~= nil then
+		for inv_name, patterns in next, initial_processors do
+			new_autoprocessing:add_processor(inv_name, patterns)
+		end
 	end
 
 	return new_autoprocessing
