@@ -1,4 +1,4 @@
----@type AutoProcessing.PatternInfo
+---@type AutoCrafter.PatternInfo
 return {
 	label = "8x Gold Ingots",
 	-- desired outcome per "process"

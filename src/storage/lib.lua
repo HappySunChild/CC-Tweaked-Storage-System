@@ -1,5 +1,5 @@
 local storage_lib = {
-	AutoProcessing = require("storage/AutoProcessing"),
+	AutoCrafter = require("storage/AutoCrafter"),
 	StorageDisplay = require("storage/StorageDisplay"),
 	StorageSystem = require("storage/StorageSystem"),
 }

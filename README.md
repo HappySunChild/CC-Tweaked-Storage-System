@@ -23,9 +23,10 @@ Setting up the storage system is relatively easy and cheap, as all you need to g
 **All inventories must be connected via Wired Modems and be on the same network!!! Including the IO inventory!!**
 
 ![ioinventory](images/io.png)
+![backside](images/backside.png)
 
-## Auto Processing
-With the latest update this program is now capable of primitive autoprocessing! Currently there is no documentation on how to use it, so if you want to learn how to make your own patterns take a look at the example program. (A program to make editing these patterns easier is planned)
+## Auto Crafting
+With the latest update this program is now capable of primitive autocrafting! Currently there is no documentation on how to use it, so if you want to learn how to make your own patterns take a look at the example program. (A program to make editing these patterns easier is planned)
 
 ## Contributing
 Contributions are always welcome! Feel free to open issues or pull requests to suggest features/code.
