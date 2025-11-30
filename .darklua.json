@@ -15,6 +15,10 @@
 	"rules": [
 		"remove_types",
 		"compute_expression",
+		"remove_nil_declaration",
+		"remove_unused_if_branch",
+		"remove_unused_variable",
+		"filter_after_early_return",
 		{
 			"rule": "rename_variables",
 			"include_functions": true
