@@ -6,13 +6,10 @@ local completion = require("cc/completion")
 local format_name = require("storage/utility/format_name")
 local storage = require("storage/lib")
 
+local config = require("utility/config")
 local filter = require("utility/filter")
 local prompting = require("utility/prompting")
 local yield_for_user = require("utility/yield_for_user")
-
-local SETTING_IO_INVENTORY = "storage.io_inv"
-local SETTING_SYSTEM_INVENTORIES = "storage.system_invs"
-local SETTING_PROCESSORS = "storage.processors"
 
 local EXPORTING_ITEM = "Exporting %d items..."
 local IMPORING_ITEM = "Importing items..."
@@ -35,17 +32,16 @@ local function get_modem_inventories()
 	return inventories
 end
 
-settings.load()
+config.load()
 
-local io_inventory = settings.get(SETTING_IO_INVENTORY)
-local system_inventories = settings.get(SETTING_SYSTEM_INVENTORIES)
+local io_inventory = config.get(config.settings.IO_INVENTORY)
+local system_inventories = settings.get(config.settings.SYSTEM_INVENTORIES)
 
 if io_inventory == nil or not modem.isPresentRemote(io_inventory) then
 	io_inventory =
 		prompting.choice_list(get_modem_inventories(), "Choose IO Inventory", format_name)
 
-	settings.set(SETTING_IO_INVENTORY, io_inventory)
-	settings.save()
+	config.set(config.settings.IO_INVENTORY, io_inventory)
 end
 
 if system_inventories == nil then
@@ -57,12 +53,13 @@ if system_inventories == nil then
 		format_name
 	)
 
-	settings.set(SETTING_SYSTEM_INVENTORIES, system_inventories)
-	settings.save()
+	config.set(config.settings.SYSTEM_INVENTORIES, system_inventories)
 end
 
+config.save()
+
 local system = storage.StorageSystem(system_inventories)
-local autoprocessing = storage.AutoProcessing(system, settings.get(SETTING_PROCESSORS, {}))
+local autoprocessing = storage.AutoProcessing(system, config.get(config.settings.PROCESSORS))
 
 local width, height = term.getSize()
 
@@ -74,7 +71,7 @@ local output_window =
 local terminal_window = window.create(term.current(), 1, 1, width, height - 1, false)
 
 local monitor_display =
-	storage.StorageDisplay(monitor, { column_count = 2, index_justification = 4 })
+	storage.StorageDisplay(monitor, { column_count = 1, index_justification = 4 })
 local output_display =
 	storage.StorageDisplay(output_window, { column_count = 1, index_justification = 3 })
 local terminal_display =
@@ -181,8 +178,8 @@ local function update_autoprocessing_setting()
 		processors[proc_name] = info.patterns
 	end
 
-	settings.set(SETTING_PROCESSORS, processors)
-	settings.save()
+	config.set(config.settings.PROCESSORS, processors)
+	config.save()
 end
 
 ----------------------------------------------------------------------------------------------------
