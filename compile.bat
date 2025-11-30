@@ -1,0 +1,1 @@
+darklua process src/main.lua build/compiled.lua

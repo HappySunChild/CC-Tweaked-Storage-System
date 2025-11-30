@@ -1,27 +1,31 @@
 # CC:Tweaked Storage System
- A useful program for interfacing/visualizing large storage systems.
- 
- **THIS PROGRAM IS DESIGNED TO WORK WITH `CC: TWEAKED 1.109.3+`**
- 
-![Screenshot1](images/screenshot1.png)
+A useful program for interfacing with large storage systems.
+
+**THIS PROGRAM IS DESIGNED TO WORK WITH `CC: TWEAKED 1.114.2+`!**<br/>
+It may work in older versions, but most likely not.
+
+![screenshot](images/screenshot.png)
 
 ## Downloading
- This can be downloaded by using the following command.<br/>
- `wget run https://raw.githubusercontent.com/HappySunChild/CC-Tweaked-Storage-System/refs/heads/main/downloader.lua`
+This program can be downloaded by running this command: <br/>
+`wget [LINK TBD]`
 
 ## Requirements
-1. Speaker
-2. Monitors (Advanced Monitors recommended)
-3. Wired Modems (and cables!)
-4. Any buffer inventory - Used for inputting/outputting items into the system.
+1. Monitors (Advanced preferably)
+2. Computer (Advanced preferably)
+3. IO inventory
+4. Wired modems + cables
+5. an internet connection
 
 ## Setup
-Setting up the storage system is relatively easy and cheap, as all you really need to get started is some monitors, cables, wired modems and a couple inventories to connect to the system with said wired modems.
+Setting up the storage system is relatively easy and cheap, as all you need to get started is some monitors, cables, wired modems and a couple inventories to connect to the system with those wired modems.
 
-The placement of the buffer inventory in the system does not matter, but it is recommended you have it near/next to the Computer running the system program, since it is where you make requests for inputting and outputting items from the system.
+**All inventories must be connected via Wired Modems and be on the same network!!! Including the IO inventory!!**
 
-**All inventories connected to the system must be connected via Wired Modems and cables, directly placing inventories next to the Computer will not work.**
+![ioinventory](images/io.png)
 
-![backside](images/backside.png)
+## Auto Processing
+With the latest update this program is now capable of primitive autoprocessing! Currently there is no documentation on how to use it, so if you want to learn how to make your own patterns take a look at the example program. (A program to make editing these patterns easier is planned)
 
-![setup](images/simplesetup.png)
+## Contributing
+Contributions are always welcome! Feel free to open issues or pull requests to suggest features/code.
