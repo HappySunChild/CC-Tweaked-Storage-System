@@ -8,6 +8,7 @@ local format_name = require("storage/format/format_name")
 local config = require("utility/config")
 local filter = require("utility/filter")
 local get_modem_inventories = require("utility/get_modem_inventories")
+local reload_patterns = require("utility/reload_patterns")
 
 local prompt_checkbox = require("utility/prompt/checkbox")
 local prompt_choice = require("utility/prompt/choice")
@@ -60,20 +61,7 @@ local output_display =
 local terminal_display =
 	storage.StorageDisplay(terminal_window, { column_count = 2, index_justification = 3 })
 
-local function reload_patterns()
-	local cur_dir = fs.getDir(shell.getRunningProgram())
-	local pattern_dir = fs.combine(cur_dir, "patterns")
-
-	if not fs.exists(pattern_dir) then
-		return
-	end
-
-	for _, file in ipairs(fs.list(pattern_dir)) do
-		local no_extension = file:gsub("%..*", "")
-
-		autocrafter:register_pattern(no_extension, require("patterns/" .. no_extension))
-	end
-end
+-- Parallel functions
 
 ---@class ProcessingJob
 ---@field processor string
@@ -117,7 +105,7 @@ local function periodic_update()
 	end
 end
 
-reload_patterns()
+reload_patterns(autocrafter)
 
 parallel.waitForAny(
 	io_menu(modem, io_inventory, system, autocrafter, output_window, terminal_window),

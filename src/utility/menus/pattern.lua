@@ -3,6 +3,7 @@ local menu = require("utility/menus/menu")
 local prompt_checkbox = require("utility/prompt/checkbox")
 
 local pattern_formatter = require("utility/pattern_formatter")
+local reload_patterns = require("utility/reload_patterns")
 
 ---@param autocrafter AutoCrafter
 ---@return string[]
@@ -40,7 +41,7 @@ end
 ---@param processors string[]
 ---@param autocrafter AutoCrafter
 return function(processors, autocrafter)
-	local MENU_CHOICES = { "Add patterns", "Remove patterns" }
+	local MENU_CHOICES = { "Add patterns", "Remove patterns", "Reload patterns" }
 
 	menu(
 		MENU_CHOICES,
@@ -48,8 +49,10 @@ return function(processors, autocrafter)
 		function(index)
 			if index == 1 then
 				add_patterns(processors, autocrafter)
-			else
+			elseif index == 2 then
 				remove_patterns(processors, autocrafter)
+			elseif index == 3 then
+				reload_patterns(autocrafter)
 			end
 		end
 	)
