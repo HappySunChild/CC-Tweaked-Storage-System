@@ -54,8 +54,10 @@ local output_window =
 	window.create(term.current(), width * 2 / 3, 2, math.ceil(width / 3), height - 2, false)
 local terminal_window = window.create(term.current(), 1, 1, width, height - 1, false)
 
-local monitor_display =
-	storage.StorageDisplay(monitor, { column_count = 1, index_justification = 4 })
+local monitor_display = storage.StorageDisplay(
+	monitor,
+	{ column_count = config.get(config.settings.MONITORS_COLUMNS), index_justification = 4 }
+)
 local output_display =
 	storage.StorageDisplay(output_window, { column_count = 1, index_justification = 3 })
 local terminal_display =
