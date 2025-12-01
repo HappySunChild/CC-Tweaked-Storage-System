@@ -32,15 +32,15 @@ local function prompt_craft(autocrafter)
 
 	term.clear()
 
-	local iterations = tonumber(
+	local count = tonumber(
 		prompt_text(string.format("Process Iterations | %s", format_pattern(pattern)))
 	) or 1
 
-	if iterations == 0 then
+	if count == 0 then
 		return
 	end
 
-	local missing = autocrafter:get_missing_ingredients(pattern, iterations)
+	local missing = autocrafter:get_missing_ingredients(pattern, count)
 
 	if next(missing) ~= nil then
 		term.clear()
@@ -48,20 +48,36 @@ local function prompt_craft(autocrafter)
 
 		local list = ""
 
-		for name, count in next, missing do
-			list = list .. string.format("MISSING %s -> %d\n", name, count)
+		local can_subprocess = true
+
+		for ingr_name, ingr_count in next, missing do
+			local can_craft = autocrafter:can_craft(ingr_name, ingr_count)
+
+			if not can_craft then
+				can_subprocess = false
+			end
+
+			list = list
+				.. string.format(
+					"%s %s -> %d\n",
+					can_craft and "CRAFTABLE" or "MISSING",
+					ingr_name,
+					ingr_count
+				)
 		end
 
-		printError(NOT_ENOUGH_INGREDIENTS:format(iterations, format_pattern(pattern), list))
+		if not can_subprocess then
+			printError(NOT_ENOUGH_INGREDIENTS:format(count, format_pattern(pattern), list))
 
-		yield_for_user()
+			yield_for_user()
 
-		return
+			return
+		end
 	end
 
 	local chosen_processors = prompt_checkbox(
 		available_processors,
-		string.format("Select Processor Distribution | %dx %s", iterations, format_pattern(pattern)),
+		string.format("Select Processor Distribution | %dx %s", count, format_pattern(pattern)),
 		format_name
 	)
 
@@ -69,33 +85,12 @@ local function prompt_craft(autocrafter)
 		return
 	end
 
-	local tasks_per_processor = math.floor(iterations / #chosen_processors)
-	local extra_tasks = iterations % #chosen_processors
-
-	local jobs = {}
-
-	for _, proc_name in ipairs(chosen_processors) do
-		local extra = 0
-
-		if extra_tasks > 0 then
-			extra_tasks = extra_tasks - 1
-
-			extra = 1
-		end
-
-		table.insert(jobs, {
-			processor = proc_name,
-			pattern = pattern,
-			count = tasks_per_processor + extra,
-		})
-	end
-
-	os.queueEvent("start_crafting", jobs)
+	os.queueEvent("start_crafting", chosen_processors, pattern, count)
 end
 
 ---@param modem peripheral.Modem
 ---@param io_inventory string
----@param system StorageSystem
+---@param system ItemStorage
 ---@param autocrafter AutoCrafter
 return function(modem, io_inventory, system, autocrafter)
 	menu({ "Craft", "Processor inventories" }, "Auto Processing Menu", function(index)

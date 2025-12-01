@@ -7,8 +7,8 @@ return {
 	},
 	-- slots to input items into
 	input_slots = {
-		[1] = { 8, "minecraft:gold_ore" },
-		[2] = { 1, "minecraft:coal" },
+		[1] = { 8, "minecraft:raw_gold" },
+		[2] = { 1, "minecraft:charcoal" },
 	},
 	-- slots to constantly pull
 	output_slots = { 3 },

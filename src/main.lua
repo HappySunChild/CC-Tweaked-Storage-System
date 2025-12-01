@@ -65,25 +65,11 @@ local terminal_display =
 
 -- Parallel functions
 
----@class ProcessingJob
----@field processor string
----@field pattern string
----@field count integer
-
 local function autocrafting_manager()
-	local _, task_info, id = os.pullEvent("start_crafting") ---@type string, ProcessingJob[], any
-	local crafting_tasks = {}
-
-	for _, job in ipairs(task_info) do
-		local run_task = function()
-			autocrafter:start_process_async(job.processor, job.pattern, job.count)
-		end
-
-		table.insert(crafting_tasks, run_task)
-	end
+	local _, processors, pattern, count, id = os.pullEvent("start_crafting") ---@type string, string[], string, integer, any
 
 	local function run_all()
-		parallel.waitForAll(table.unpack(crafting_tasks))
+		autocrafter:start_batch_process_async(processors, pattern, count)
 
 		os.queueEvent("crafting_finished", id)
 	end

@@ -78,7 +78,7 @@ end
 
 ---@param modem peripheral.Modem
 ---@param io_inventory string
----@param system StorageSystem
+---@param system ItemStorage
 ---@param autocrafter AutoCrafter
 return function(modem, io_inventory, system, autocrafter)
 	menu(

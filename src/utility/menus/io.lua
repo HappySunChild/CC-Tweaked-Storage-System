@@ -14,7 +14,7 @@ local IMPORING_ITEM = "Importing items..."
 local ITEMS_TRANSFERRED = "Transferred %d items."
 
 ---@param io_inventory string
----@param system StorageSystem
+---@param system ItemStorage
 ---@param output_window window.Window
 local function output_prompt(io_inventory, system, output_window)
 	output_window.setVisible(true)
@@ -101,7 +101,7 @@ local function output_prompt(io_inventory, system, output_window)
 	output_window.setVisible(false)
 end
 ---@param io_inventory string
----@param system StorageSystem
+---@param system ItemStorage
 local function input_prompt(io_inventory, system)
 	local _, index =
 		prompt_choice({ "yesss!!!!!!", "wait nvm" }, "Storage System Input - Are you sure?")
@@ -138,7 +138,7 @@ end
 
 ---@param modem peripheral.Modem
 ---@param io_inventory string
----@param system StorageSystem
+---@param system ItemStorage
 ---@param autocrafter AutoCrafter
 ---@param output_window window.Window
 ---@param terminal_window window.Window
