@@ -1,4 +1,4 @@
-# CC:Tweaked Storage System
+# okstorage
 A useful program for interfacing with large storage systems.
 
 **THIS PROGRAM IS DESIGNED TO WORK WITH `CC: TWEAKED 1.114.2+`!**<br/>
@@ -8,7 +8,7 @@ It may work in older versions, but most likely not.
 
 ## Downloading
 This program can be downloaded by running this command: <br/>
-`wget https://raw.githubusercontent.com/HappySunChild/CC-Tweaked-Storage-System/refs/heads/main/build/compiled.lua storagesystem.lua`
+`wget https://raw.githubusercontent.com/HappySunChild/okstorage/main/build/compiled.lua storagesystem.lua`
 
 ## Requirements
 1. Monitors (Advanced preferably)
