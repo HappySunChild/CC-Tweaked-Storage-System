@@ -1,3 +1,4 @@
+local distribute = require("storage/utility/distribute")
 local find = require("storage/utility/find")
 
 local UNKNOWN_PERIPHERAL = 'Unable to find peripheral "%s"'
@@ -22,7 +23,6 @@ local function get_pattern_ingredients(pattern, iterations)
 	return requirements
 end
 
----comment
 ---@param pattern AutoCrafter.PatternInfo
 ---@return integer count
 local function get_pattern_output_count(pattern)
@@ -49,11 +49,12 @@ end
 ---@class AutoCrafter.Processor
 ---@field patterns string[]
 ---@field in_use boolean
+---@field reserved boolean
 
 ---@class AutoCrafter
 ---@field processors table<string, AutoCrafter.Processor>
 ---@field patterns table<string, AutoCrafter.PatternInfo>
----@field _system StorageSystem
+---@field _storage ItemStorage
 local CLASS = {
 	---Registers a pattern.
 	---@param self AutoCrafter
@@ -93,6 +94,7 @@ local CLASS = {
 		self.processors[proc_name] = {
 			patterns = patterns,
 			in_use = false,
+			reserved = false,
 		}
 	end,
 	---Removes a processor from the AutoProcessing manager
@@ -110,6 +112,8 @@ local CLASS = {
 		for proc_name in next, self.processors do
 			table.insert(processors, proc_name)
 		end
+
+		table.sort(processors)
 
 		return processors
 	end,
@@ -160,9 +164,9 @@ local CLASS = {
 			error(UNKNOWN_PROCESSOR:format(proc_name))
 		end
 
-		return not processor.in_use
+		return not processor.in_use and not processor.reserved
 	end,
-	---Returns all available processors that are able to produce the specified item.
+	---Returns an array of all available processors that are able to produce the specified item.
 	---@param self AutoCrafter
 	---@param pattern string The name of the item to search with.
 	---@return string[] processors A list of names for available processors.
@@ -175,19 +179,68 @@ local CLASS = {
 			end
 		end
 
+		table.sort(processors)
+
 		return processors
+	end,
+	---Returns an array of all registered patterns that result in the specified item.
+	---@param self AutoCrafter
+	---@param item string
+	---@return string[] patterns
+	get_patterns_with_result = function(self, item)
+		local patterns = {}
+
+		for name, info in next, self.patterns do
+			if info.results[item] ~= nil then
+				table.insert(patterns, name)
+			end
+		end
+
+		return patterns
+	end,
+	---Returns whether the autocrafter is able to craft the specified item.
+	---@param self AutoCrafter
+	---@param item string
+	---@param item_count integer
+	---@return boolean
+	can_craft = function(self, item, item_count)
+		local patterns = self:get_patterns_with_result(item)
+
+		for _, pattern in ipairs(patterns) do
+			if #self:get_available_processors(pattern) > 0 then
+				local info = self.patterns[pattern]
+				local count = math.ceil(item_count / info.results[item])
+
+				local missing = self:get_missing_ingredients(pattern, count)
+				local ok = true
+
+				for name, missing_count in next, missing do
+					if name == item or not self:can_craft(name, missing_count) then
+						ok = false
+
+						break
+					end
+				end
+
+				if ok then
+					return true
+				end
+			end
+		end
+
+		return false
 	end,
 
 	---Returns a dictionary of all the missing ingredients for the specified pattern.
 	---@param self AutoCrafter
 	---@param pattern string The pattern to check the ingredients of.
-	---@param count integer The number of times the ingredients are used (ie. crafting a pattern multiple times).
+	---@param count integer The number of times the pattern is crafted (ie. crafting a pattern multiple times).
 	---@return table<string, integer>
 	get_missing_ingredients = function(self, pattern, count)
-		local system_items = self._system:get_system_items()
+		local system_items = self._storage:get_system_items()
 
 		local missing = {}
-		local ingredients = get_pattern_ingredients(self._patterns[pattern], count)
+		local ingredients = get_pattern_ingredients(self.patterns[pattern], count)
 
 		for ingr_name, ingr_count in next, ingredients do
 			local system_count = system_items[ingr_name] or 0
@@ -204,6 +257,7 @@ local CLASS = {
 	---@param proc_name string The name of the processor to use.
 	---@param pattern string The pattern to use with the processor.
 	---@param count integer The number of times to process this pattern on this processor.
+	---@return boolean
 	start_process_async = function(self, proc_name, pattern, count)
 		local processor = self.processors[proc_name]
 
@@ -219,15 +273,11 @@ local CLASS = {
 			error(PATTERN_NOT_SUPPORTED:format(proc_name), 2)
 		end
 
-		local missing = self:get_missing_ingredients(pattern, count)
-
-		if next(missing) ~= nil then
-			error(NOT_ENOUGH_INGREDIENTS, 2) -- TODO: change this
-		end
+		processor.reserved = false
 
 		local pattern_info = self.patterns[pattern]
 
-		local system = self._system
+		local system = self._storage
 
 		local poll_duration = 1 / pattern_info.poll_rate
 		local output_per_pattern = get_pattern_output_count(pattern_info)
@@ -263,27 +313,63 @@ local CLASS = {
 		end
 
 		processor.in_use = false
+
+		return true
+	end,
+	---@param self AutoCrafter
+	---@param processors string[]
+	---@param pattern string
+	---@param total_count integer
+	start_batch_process_async = function(self, processors, pattern, total_count)
+		local missing = self:get_missing_ingredients(pattern, total_count)
+
+		for ingr, item_count in next, missing do
+			if not self:can_craft(ingr, item_count) then
+				error(NOT_ENOUGH_INGREDIENTS, 2)
+			end
+
+			local sub_pattern = self:get_patterns_with_result(ingr)[1]
+			local sub_pattern_info = self.patterns[sub_pattern]
+
+			local sub_processors = self:get_available_processors(sub_pattern)
+
+			local iterations = math.ceil(item_count / sub_pattern_info.results[ingr])
+
+			self:start_batch_process_async(sub_processors, sub_pattern, iterations)
+		end
+
+		local tasks = {}
+
+		for _, proc_name, count in distribute(processors, total_count) do
+			local run_tasks = function()
+				self:start_process_async(proc_name, pattern, count)
+			end
+
+			table.insert(tasks, run_tasks)
+		end
+
+		parallel.waitForAll(table.unpack(tasks))
 	end,
 }
 local METATABLE = { __index = CLASS }
 
----@param system StorageSystem
+---@param storage ItemStorage
 ---@param initial_processors? table<string, string[]>
 ---@return AutoCrafter
-local function AutoCrafter(system, initial_processors)
-	local new_autocrafting = setmetatable({
-		_system = system,
+local function AutoCrafter(storage, initial_processors)
+	local new_autocrafter = setmetatable({
+		_storage = storage,
 		patterns = {},
 		processors = {},
 	}, METATABLE)
 
 	if initial_processors ~= nil then
 		for inv_name, patterns in next, initial_processors do
-			new_autocrafting:add_processor(inv_name, patterns)
+			pcall(new_autocrafter.add_processor, new_autocrafter, inv_name, patterns)
 		end
 	end
 
-	return new_autocrafting
+	return new_autocrafter
 end
 
 return AutoCrafter
