@@ -1,5 +1,28 @@
-local copy = require("utility/copy")
 local list = require("utility/prompt/list")
+
+---@param tbl table
+---@return table
+local function copy(tbl)
+	local copied = {}
+
+	for key, value in next, tbl do
+		copied[key] = value
+	end
+
+	return copied
+end
+
+---@param tbl table
+---@return integer
+local function numkeys(tbl)
+	local count = 0
+
+	for _ in next, tbl do
+		count = count + 1
+	end
+
+	return count
+end
 
 ---Prompts the user with multiple choices that they can individually check.
 ---@param choices string[]
@@ -17,29 +40,35 @@ local function checkbox(choices, title, formatter)
 	local finish_index = #new_choices
 
 	while true do
-		local selected = list(new_choices, title, function(choice, index, cursor)
-			local is_selected = index == cursor
+		local selected = list(
+			new_choices,
+			title,
+			string.format("- %d selected", numkeys(chosen)),
+			function(choice, index, cursor)
+				local is_selected = index == cursor
 
-			if index == finish_index then
-				term.setTextColor(colors.red)
+				if index == finish_index then
+					term.setTextColor(colors.red)
 
-				return string.format("%s Done", is_selected and ">" or " ")
-			end
+					return string.format("%s Done", is_selected and ">" or " ")
+				end
 
-			local is_chosen = chosen[index] ~= nil
-			local text = formatter and formatter(choice) or choice
+				local is_chosen = chosen[index] ~= nil
+				local text = formatter and formatter(choice) or choice
 
-			if is_chosen then
-				term.setTextColor(colors.green)
-			end
+				if is_chosen then
+					term.setTextColor(colors.green)
+				end
 
-			return string.format(
-				"%s [%s] %s",
-				is_selected and ">" or " ",
-				is_chosen and "x" or " ",
-				text
-			)
-		end, last_cursor)
+				return string.format(
+					"%s [%s] %s",
+					is_selected and ">" or " ",
+					is_chosen and "x" or " ",
+					text
+				)
+			end,
+			last_cursor
+		)
 
 		if selected == finish_index then
 			break

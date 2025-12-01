@@ -1,9 +1,10 @@
 ---@param choices string[]
 ---@param title string
+---@param hint string
 ---@param format_callback fun(choice: string, index: integer, cursor: integer): string
 ---@param cursor_index? integer
 ---@return integer
-local function list(choices, title, format_callback, cursor_index)
+local function list(choices, title, hint, format_callback, cursor_index)
 	if #choices == 0 then
 		return 0
 	end
@@ -40,7 +41,7 @@ local function list(choices, title, format_callback, cursor_index)
 		end
 
 		term.setCursorPos(1, height)
-		term.write(string.format("Page %d/%d", curr_page, page_count))
+		term.write(string.format("Page %d/%d %s", curr_page, page_count, hint))
 
 		local _, pressed_key = os.pullEvent("key")
 

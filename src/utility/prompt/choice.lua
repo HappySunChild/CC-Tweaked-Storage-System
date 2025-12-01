@@ -7,7 +7,7 @@ local list = require("utility/prompt/list")
 ---@return string choice
 ---@return integer index
 local function choice(choices, title, formatter)
-	local selected = list(choices, title, function(choice, index, cursor)
+	local selected = list(choices, title, "", function(choice, index, cursor)
 		local text = formatter and formatter(choice) or choice
 		local is_selected = index == cursor
 
