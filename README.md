@@ -15,7 +15,7 @@ This program can be downloaded by running this command: <br/>
 2. Computer (Advanced preferably)
 3. IO inventory
 4. Wired modems + cables
-5. an internet connection
+5. an internet connection (to download it)
 
 ## Setup
 Setting up the storage system is relatively easy and cheap, as all you need to get started is some monitors, cables, wired modems and a couple inventories to connect to the system with those wired modems.
