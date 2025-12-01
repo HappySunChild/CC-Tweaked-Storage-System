@@ -70,23 +70,25 @@ local terminal_display =
 ---@field pattern string
 ---@field count integer
 
--- Parallel functions
+local function autocrafting_manager()
+	local _, task_info, id = os.pullEvent("start_crafting") ---@type string, ProcessingJob[], any
+	local crafting_tasks = {}
 
-local function auto_crafting_manager()
-	while true do
-		local _, jobs = os.pullEvent("start_crafting") ---@type string, ProcessingJob[]
-		local tasks = {}
-
-		for _, job in ipairs(jobs) do
-			local runner = function()
-				autocrafter:start_process_async(job.processor, job.pattern, job.count)
-			end
-
-			table.insert(tasks, runner)
+	for _, job in ipairs(task_info) do
+		local run_task = function()
+			autocrafter:start_process_async(job.processor, job.pattern, job.count)
 		end
 
-		parallel.waitForAll(table.unpack(tasks))
+		table.insert(crafting_tasks, run_task)
 	end
+
+	local function run_all()
+		parallel.waitForAll(table.unpack(crafting_tasks))
+
+		os.queueEvent("crafting_finished", id)
+	end
+
+	parallel.waitForAll(run_all, autocrafting_manager)
 end
 
 local function periodic_update()
@@ -111,6 +113,6 @@ reload_patterns(autocrafter)
 
 parallel.waitForAny(
 	io_menu(modem, io_inventory, system, autocrafter, output_window, terminal_window),
-	auto_crafting_manager,
+	autocrafting_manager,
 	periodic_update
 )
