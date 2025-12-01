@@ -102,9 +102,9 @@ local CLASS = {
 	---end
 	---```
 	---@param self StorageSystem
-	---@param item_name string
+	---@param query string
 	---@return fun(): string?, integer?, peripheral.InventoryItem?
-	find_item = function(self, item_name)
+	query_items = function(self, query)
 		local cur_inv = nil
 		local cur_slot = nil
 
@@ -113,7 +113,7 @@ local CLASS = {
 				for slot, item in next, items, cur_slot do
 					cur_slot = slot
 
-					if item.name == item_name then
+					if item.name:match(query) then
 						return inv_name, slot, item
 					end
 				end
@@ -221,17 +221,17 @@ local CLASS = {
 	---Imports the specified item into the system from an external inventory.
 	---@see StorageSystem.pull_items
 	---@param self StorageSystem
-	---@param item_name string
+	---@param query string
 	---@param inv_from string
 	---@param count? integer
 	---@return integer total_transferred
-	import_item = function(self, item_name, inv_from, count)
+	import_item = function(self, query, inv_from, count)
 		local total_transferred = 0
 
 		local inventory = get_inventory(inv_from)
 
 		for slot, item in next, inventory.list() do
-			if item.name == item_name then
+			if item.name == query then
 				local remaining = count and count - total_transferred or item.count
 				local transferred =
 					self:import_from_slot(inv_from, slot, math.min(remaining, item.count))
@@ -249,15 +249,15 @@ local CLASS = {
 	---Exports the specified item from the system into an external inventory.
 	---@see StorageSystem.push_items
 	---@param self StorageSystem
-	---@param item_name string
+	---@param query string
 	---@param inv_to string
 	---@param slot_to? integer
 	---@param count? integer
 	---@return integer total_transferred
-	export_item = function(self, item_name, inv_to, slot_to, count)
+	export_item = function(self, query, inv_to, slot_to, count)
 		local total_transferred = 0
 
-		for inv, slot in self:find_item(item_name) do
+		for inv, slot in self:query_items(query) do
 			local remaining = count ~= nil and count - total_transferred or nil
 			local transferred = self:push_items(inv, slot, inv_to, slot_to, remaining)
 
