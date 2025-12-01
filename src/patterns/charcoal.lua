@@ -1,16 +1,16 @@
 ---@type AutoCrafter.PatternInfo
 return {
-	label = "8x Iron Ingots",
+	label = "3x Charcoal",
 	-- desired outcome per "process"
 	results = {
-		["minecraft:iron_ingot"] = 8,
+		["minecraft:charcoal"] = 3,
 	},
 	-- slots to input items into
 	input_slots = {
-		[1] = { 8, "minecraft:raw_iron" },
-		[2] = { 1, "minecraft:charcoal" },
+		[1] = { 3, "minecraft:oak_log" },
+		[2] = { 2, "minecraft:oak_log" },
 	},
 	-- slots to constantly pull
 	output_slots = { 3 },
-	poll_rate = 0.5,
+	poll_rate = 1,
 }
