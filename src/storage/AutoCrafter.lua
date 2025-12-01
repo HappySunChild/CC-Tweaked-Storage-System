@@ -52,21 +52,21 @@ end
 
 ---@class AutoCrafter
 ---@field processors table<string, AutoCrafter.Processor>
----@field package _patterns table<string, AutoCrafter.PatternInfo>
----@field package _system StorageSystem
+---@field patterns table<string, AutoCrafter.PatternInfo>
+---@field _system StorageSystem
 local CLASS = {
 	---Registers a pattern.
 	---@param self AutoCrafter
 	---@param pattern string
 	---@param info AutoCrafter.PatternInfo
 	register_pattern = function(self, pattern, info)
-		self._patterns[pattern] = info
+		self.patterns[pattern] = info
 	end,
 	---Deregisters a pattern.
 	---@param self AutoCrafter
 	---@param pattern string
 	deregister_pattern = function(self, pattern)
-		self._patterns[pattern] = nil
+		self.patterns[pattern] = nil
 	end,
 	---Returns an array of all registers patterns.
 	---@param self AutoCrafter
@@ -74,18 +74,11 @@ local CLASS = {
 	get_registered_patterns = function(self)
 		local list = {}
 
-		for name in next, self._patterns do
+		for name in next, self.patterns do
 			table.insert(list, name)
 		end
 
 		return list
-	end,
-	---Returns the info of the pattern if it has been registered, otherwise it returns nil.
-	---@param self AutoCrafter
-	---@param pattern string
-	---@return AutoCrafter.PatternInfo?
-	get_pattern_info = function(self, pattern)
-		return self._patterns[pattern]
 	end,
 
 	---Adds a processor to the AutoProcessing manager.
@@ -232,7 +225,7 @@ local CLASS = {
 			error(NOT_ENOUGH_INGREDIENTS, 2) -- TODO: change this
 		end
 
-		local pattern_info = self._patterns[pattern]
+		local pattern_info = self.patterns[pattern]
 
 		local system = self._system
 
@@ -280,7 +273,7 @@ local METATABLE = { __index = CLASS }
 local function AutoCrafter(system, initial_processors)
 	local new_autocrafting = setmetatable({
 		_system = system,
-		_patterns = {},
+		patterns = {},
 		processors = {},
 	}, METATABLE)
 
