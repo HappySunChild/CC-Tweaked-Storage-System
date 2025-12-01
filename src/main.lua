@@ -42,7 +42,7 @@ end
 
 config.save()
 
-local system = storage.StorageSystem(system_inventories)
+local system = storage.ItemStorage(system_inventories)
 local autocrafter = storage.AutoCrafter(system, config.get(config.settings.PROCESSORS))
 
 local monitor = peripheral.find("monitor") ---@type peripheral.Monitor

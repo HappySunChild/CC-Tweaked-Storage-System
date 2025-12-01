@@ -9,29 +9,29 @@ local function default_item_sort(a, b)
 	return a.count > b.count
 end
 
----@class StorageSystem
+---@class ItemStorage
 ---@field inventories table<string, peripheral.Inventory>
 ---@field package _item_cache table<string, peripheral.InventoryItem[]>
 local CLASS = {
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param inv_name string The name of the peripheral to track (i.e. `"left"` or `"minecraft:chest_0"`)
 	track_inventory = function(self, inv_name)
 		self.inventories[inv_name] = get_inventory(inv_name)
 	end,
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param inv_name string The name of the peripheral to stop tracking (i.e. `"left"` or `"minecraft:chest_0"`)
 	untrack_inventory = function(self, inv_name)
 		self.inventories[inv_name] = nil
 	end,
 	---Updates the internal item cache by reading the contents of all the tracked inventories.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	update_inventories = function(self)
 		for inv_name, inventory in next, self.inventories do
 			self._item_cache[inv_name] = inventory.list()
 		end
 	end,
 	---Returns an array of all the inventories in the system.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@return string[]
 	get_inventories = function(self)
 		local inventories = {}
@@ -44,7 +44,7 @@ local CLASS = {
 	end,
 
 	---Calculates the total size (slots) of the system.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@return integer
 	get_system_size = function(self)
 		local size = 0
@@ -56,7 +56,7 @@ local CLASS = {
 		return size
 	end,
 	---Returns a dictionary of all the items, and their counts, inside the system.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@return table<string, integer>
 	get_system_items = function(self)
 		local output = {}
@@ -75,7 +75,7 @@ local CLASS = {
 	---Returns an array of all the items in the system, sorted.
 	---
 	---You can specify your own sorter callback.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param sorter? fun(a: peripheral.InventoryItem, b: peripheral.InventoryItem): boolean
 	---@return peripheral.InventoryItem[]
 	get_system_items_sorted = function(self, sorter)
@@ -101,7 +101,7 @@ local CLASS = {
 	---	print(inv, slot, item.count)
 	---end
 	---```
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param query string
 	---@return fun(): string?, integer?, peripheral.InventoryItem?
 	query_items = function(self, query)
@@ -128,7 +128,7 @@ local CLASS = {
 	end,
 
 	---Pulls items from one inventory into another.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param inv_from string
 	---@param slot_from integer
 	---@param inv_to string
@@ -145,7 +145,7 @@ local CLASS = {
 		return to_inventory.pullItems(inv_from, slot_from, count, slot_to)
 	end,
 	---Pushes items from one inventory into another.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param inv_from string
 	---@param slot_from integer
 	---@param inv_to string
@@ -164,7 +164,7 @@ local CLASS = {
 
 	---Imports an item into the system from an external inventory, at the specified slot.
 	---@see StorageSystem.import_item
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param inv_from string
 	---@param slot_from integer
 	---@param count? integer
@@ -202,7 +202,7 @@ local CLASS = {
 		return total_transferred
 	end,
 	---Imports all items from an inventory.
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param inv_from string
 	---@return integer
 	import_inventory = function(self, inv_from)
@@ -220,7 +220,7 @@ local CLASS = {
 	end,
 	---Imports the specified item into the system from an external inventory.
 	---@see StorageSystem.pull_items
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param query string
 	---@param inv_from string
 	---@param count? integer
@@ -248,7 +248,7 @@ local CLASS = {
 	end,
 	---Exports the specified item from the system into an external inventory.
 	---@see StorageSystem.push_items
-	---@param self StorageSystem
+	---@param self ItemStorage
 	---@param query string
 	---@param inv_to string
 	---@param slot_to? integer
@@ -274,8 +274,8 @@ local CLASS = {
 local METATABLE = { __index = CLASS }
 
 ---@param initial_inventories? string[]
----@return StorageSystem
-local function StorageSystem(initial_inventories)
+---@return ItemStorage
+local function ItemStorage(initial_inventories)
 	local new_storagesystem = setmetatable({
 		inventories = {},
 		_item_cache = {},
@@ -290,4 +290,4 @@ local function StorageSystem(initial_inventories)
 	return new_storagesystem
 end
 
-return StorageSystem
+return ItemStorage
