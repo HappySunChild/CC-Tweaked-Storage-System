@@ -6,7 +6,9 @@
 		"require_mode": {
 			"name": "path",
 			"sources": {
-				"storage": "src/storage",
+				"lib": "src/lib",
+				"prompt": "src/prompt",
+				"menus": "src/menus",
 				"utility": "src/utility"
 			}
 		}
