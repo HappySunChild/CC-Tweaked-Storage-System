@@ -133,24 +133,22 @@ end
 ---@param autocrafter AutoCrafter
 ---@param terminal_window window.Window
 return function(modem, io_inventory, system, autocrafter, terminal_window)
-	return function()
-		menu(
-			{ "Storage output", "Storage input", "Processing", "View chart" },
-			"Storage IO Menu",
-			function(index)
-				if index == 1 then
-					output_prompt(system, io_inventory)
-				elseif index == 2 then
-					input_prompt(system, io_inventory)
-				elseif index == 3 then
-					autocrafting_menu(modem, io_inventory, system, autocrafter)
-				elseif index == 4 then
-					show_display(terminal_window)
-				end
+	menu(
+		{ "Storage output", "Storage input", "Processing", "View chart" },
+		"Storage IO Menu",
+		function(index)
+			if index == 1 then
+				output_prompt(system, io_inventory)
+			elseif index == 2 then
+				input_prompt(system, io_inventory)
+			elseif index == 3 then
+				autocrafting_menu(modem, io_inventory, system, autocrafter)
+			elseif index == 4 then
+				show_display(terminal_window)
 			end
-		)
+		end
+	)
 
-		term.clear()
-		term.setCursorPos(1, 1)
-	end
+	term.clear()
+	term.setCursorPos(1, 1)
 end

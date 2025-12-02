@@ -97,25 +97,29 @@ e(h:format(w),-n.index_justification)local D=' '..c(x.count)local E=u-#C-#D if y
 B))k.blit(f(F,q,B))k.blit(f(D,r,B))end end}local j={__index=i}local function k(l
 ,m)local n=setmetatable({redirect=l,config=m},j)return n end return k end
 function a.j()local c=a.cache.j if not c then c={c=b()}a.cache.j=c end return c.
-c end end do local function b()local c='Unable to find peripheral "%s"'local d=
-'Peripheral "%s" is not a valid inventory!'local function e(f)local g=peripheral
-.wrap(f)if g==nil then error(c:format(f),2)end if g.list==nil then error(d:
-format(f),2)end return g end return e end function a.k()local c=a.cache.k if not
-c then c={c=b()}a.cache.k=c end return c.c end end do local function b()local c=
-a.k()local d='Unable to find inventory "%s", is it being tracked?'local function
-e(f,g)return f.count>g.count end local f={load_peripheral=function(f,g)f.
-inventories[g]=c(g)end,unload_peripheral=function(f,g)f.inventories[g]=nil end,
-update_inventories=function(f)for g,h in next,f.inventories do f._item_cache[g]=
-h.list()end end,get_inventories=function(f)local g={}for h in next,f.inventories
-do table.insert(g,h)end return g end,get_system_size=function(f)local g=0 for h,
-i in next,f.inventories do g=g+i.size()end return g end,get_system_items=
-function(f)local g={}for h,i in next,f._item_cache do for j,k in next,i do local
-l=k.name local m=k.count g[l]=(g[l]or 0)+m end end return g end,
-get_system_items_sorted=function(f,g)local h={}for i,j in next,f:
-get_system_items()do table.insert(h,{name=i,count=j})end table.sort(h,g or e)
-return h end,query_items=function(f,g)local h local i return function()for j,k
-in next,f._item_cache,h do for l,m in next,k,i do i=l if m.name:match(g)then
-return j,l,m end end h=j i=nil end return nil,nil,nil end end,pull_items=
+c end end do local function b()return{list=function()local c={}for d=1,16 do c[d
+]=turtle.getItemDetail(d)end return c end}end function a.k()local c=a.cache.k if
+not c then c={c=b()}a.cache.k=c end return c.c end end do local function b()
+local c=a.k()local d='Unable to find peripheral "%s"'local e=
+'Peripheral "%s" is not a valid inventory!'local f=peripheral.find('modem')local
+g=f.getNameLocal()local function h(i)if i==g then return c end local j=
+peripheral.wrap(i)if j==nil then error(d:format(i),2)end if j.list==nil then
+error(e:format(i),2)end return j end return h end function a.l()local c=a.cache.
+l if not c then c={c=b()}a.cache.l=c end return c.c end end do local function b(
+)local c=a.l()local d='Unable to find inventory "%s", is it being tracked?'
+local function e(f,g)return f.count>g.count end local f={load_peripheral=
+function(f,g)f.inventories[g]=c(g)end,unload_peripheral=function(f,g)f.
+inventories[g]=nil end,update_inventories=function(f)for g,h in next,f.
+inventories do f._item_cache[g]=h.list()end end,get_inventories=function(f)local
+g={}for h in next,f.inventories do table.insert(g,h)end return g end,
+get_system_size=function(f)local g=0 for h,i in next,f.inventories do g=g+i.
+size()end return g end,get_system_items=function(f)local g={}for h,i in next,f.
+_item_cache do for j,k in next,i do local l=k.name local m=k.count g[l]=(g[l]or
+0)+m end end return g end,get_system_items_sorted=function(f,g)local h={}for i,j
+in next,f:get_system_items()do table.insert(h,{name=i,count=j})end table.sort(h,
+g or e)return h end,query_items=function(f,g)local h local i return function()
+for j,k in next,f._item_cache,h do for l,m in next,k,i do i=l if m.name:match(g)
+then return j,l,m end end h=j i=nil end return nil,nil,nil end end,pull_items=
 function(f,g,h,i,j,k)local l=f.inventories[i]if l==nil then error(d:format(i),2)
 end return l.pullItems(g,h,k,j)end,push_items=function(f,g,h,i,j,k)local l=f.
 inventories[g]if l==nil then error(d:format(g),2)end return l.pushItems(i,h,k,j)
@@ -132,11 +136,11 @@ export_item=function(f,g,h,i,j)local k=0 for l,m in f:query_items(g)do local n=j
 ~=nil and j-k or nil local o=f:push_items(l,m,h,i,n)k=k+o if j==nil or k>=j then
 break end end return k end}local g={__index=f}local function h(i)local j=
 setmetatable({inventories={},_item_cache={}},g)if i~=nil then for k,l in next,i
-do j:load_peripheral(l)end end return j end return h end function a.l()local c=a
-.cache.l if not c then c={c=b()}a.cache.l=c end return c.c end end do
+do j:load_peripheral(l)end end return j end return h end function a.m()local c=a
+.cache.m if not c then c={c=b()}a.cache.m=c end return c.c end end do
 local function b()local c={format_name=a.b(),AutoCrafter=a.e(),StorageDisplay=a.
-j(),ItemStorage=a.l()}return c end function a.m()local c=a.cache.m if not c then
-c={c=b()}a.cache.m=c end return c.c end end do local function b()local c={}local
+j(),ItemStorage=a.m()}return c end function a.n()local c=a.cache.n if not c then
+c={c=b()}a.cache.n=c end return c.c end end do local function b()local c={}local
 d={}local function e(f,...)local g,h=coroutine.resume(f,...)if g then return h
 end printError(h)end local function f(g,...)local h=e(g,...)if coroutine.status(
 g)~='dead'then table.insert(d,{thread=g,filter=h})end end return{spawn=function(
@@ -146,20 +150,20 @@ start_scheduler=function()while true do while#c>0 do local g=table.remove(c,1)f(
 g.thread,table.unpack(g.args))end local g=table.pack(os.pullEvent())local h=g[1]
 for i=#d,1,-1 do local j=d[i]if j.filter==nil or j.filter==h then local k=j.
 thread local l=e(k,table.unpack(g))if coroutine.status(k)=='dead'then table.
-remove(d,i)else j.filter=l end end end end end}end function a.n()local c=a.cache
-.n if not c then c={c=b()}a.cache.n=c end return c.c end end do local function b
+remove(d,i)else j.filter=l end end end end end}end function a.o()local c=a.cache
+.o if not c then c={c=b()}a.cache.o=c end return c.c end end do local function b
 ()local function c(d,e)local f={}for g,h in next,d do if e(g,h)then if type(g)==
 'number'then table.insert(f,h)else f[g]=h end end end return f end return c end
-function a.o()local c=a.cache.o if not c then c={c=b()}a.cache.o=c end return c.
+function a.p()local c=a.cache.p if not c then c={c=b()}a.cache.p=c end return c.
 c end end do local function b()local function c(d)local e={}for f,g in ipairs(d.
 getNamesRemote())do if peripheral.hasType(g,'inventory')then table.insert(e,g)
-end end table.sort(e)return e end return c end function a.p()local c=a.cache.p
-if not c then c={c=b()}a.cache.p=c end return c.c end end do local function b()
+end end table.sort(e)return e end return c end function a.q()local c=a.cache.q
+if not c then c={c=b()}a.cache.q=c end return c.c end end do local function b()
 local function c(d)local e=fs.getDir(shell.getRunningProgram())local f=fs.
 combine(e,'patterns')if not fs.exists(f)then return end for g,h in ipairs(fs.
 list(f))do local i=h:gsub('%..*','')local j=loadfile(fs.combine(f,h),'t')()d:
-register_pattern(i,j)end end return c end function a.q()local c=a.cache.q if not
-c then c={c=b()}a.cache.q=c end return c.c end end do local function b()
+register_pattern(i,j)end end return c end function a.r()local c=a.cache.r if not
+c then c={c=b()}a.cache.r=c end return c.c end end do local function b()
 local function c(d,e,f,g,h)if#d==0 then return 0 end local i=h or 1 local j,k=
 term.getSize()local l=k-4 local m=math.ceil(#d/l)while true do term.clear()term.
 setCursorPos(1,1)term.write(e)local n=math.ceil(i/l)local o=(n-1)*l+1 local p=
@@ -169,9 +173,9 @@ write(s)term.setTextColor(colors.white)end term.setCursorPos(1,k)term.write(
 string.format('Page %d/%d %s',n,m,f))local q,r=os.pullEvent('key')if r==keys.up
 then i=math.max(i-1,1)elseif r==keys.left then i=math.max(i-l,1)elseif r==keys.
 down then i=math.min(i+1,#d)elseif r==keys.right then i=math.min(i+l,#d)elseif r
-==keys.enter then break end end return i end return c end function a.r()local c=
-a.cache.r if not c then c={c=b()}a.cache.r=c end return c.c end end do
-local function b()local c=a.r()local function d(e)local f={}for g,h in next,e do
+==keys.enter then break end end return i end return c end function a.s()local c=
+a.cache.s if not c then c={c=b()}a.cache.s=c end return c.c end end do
+local function b()local c=a.s()local function d(e)local f={}for g,h in next,e do
 f[g]=h end return f end local function e(f)local g=0 for h in next,f do g=g+1
 end return g end local function f(g,h,i)local j={}local k local l=d(g)table.
 insert(l,'')local m=#l while true do local n=c(l,h,string.format('- %d selected'
@@ -180,31 +184,31 @@ return string.format('%s Done',q and'>'or' ')end local r=j[o]~=nil local s=i and
 i(n)or n if r then term.setTextColor(colors.green)end return string.format(
 '%s [%s] %s',q and'>'or' ',r and'x'or' ',s)end,k)if n==m then break end k=n j[n]
 =not j[n]and true or nil end local n={}for o in next,j do table.insert(n,g[o])
-end return n end return f end function a.s()local c=a.cache.s if not c then c={c
-=b()}a.cache.s=c end return c.c end end do local function b()local c=a.r()
+end return n end return f end function a.t()local c=a.cache.t if not c then c={c
+=b()}a.cache.t=c end return c.c end end do local function b()local c=a.s()
 local function d(e,f,g)local h=c(e,f,'',function(h,i,j)local k=g and g(h)or h
 local l=i==j return string.format('%s %s',l and'>'or' ',k)end)return e[h],h end
-return d end function a.t()local c=a.cache.t if not c then c={c=b()}a.cache.t=c
-end return c.c end end do local function b()local c=a.t()local function d(e,f,g)
+return d end function a.u()local c=a.cache.u if not c then c={c=b()}a.cache.u=c
+end return c.c end end do local function b()local c=a.u()local function d(e,f,g)
 table.insert(e,'Exit')while true do local h,i=c(e,f)if i==#e then break end g(i,
-h)end end return d end function a.u()local c=a.cache.u if not c then c={c=b()}a.
-cache.u=c end return c.c end end do local function b()local function c(d)return
+h)end end return d end function a.v()local c=a.cache.v if not c then c={c=b()}a.
+cache.v=c end return c.c end end do local function b()local function c(d)return
 function(e)local f=d.patterns[e]if f==nil then return'UNKNOWN PATTERN'end return
-f.label end end return c end function a.v()local c=a.cache.v if not c then c={c=
-b()}a.cache.v=c end return c.c end end do local function b()local c=a.u()local d
-=a.s()local e=a.v()local f=a.q()local function g(h)return d(h:
+f.label end end return c end function a.w()local c=a.cache.w if not c then c={c=
+b()}a.cache.w=c end return c.c end end do local function b()local c=a.v()local d
+=a.t()local e=a.w()local f=a.r()local function g(h)return d(h:
 get_registered_patterns(),'Choose Patterns',e(h))end local function h(i,j)local
 k=g(j)for l,m in ipairs(i)do for n,o in ipairs(k)do j:add_pattern_to_processor(m
 ,o)end end end local function i(j,k)local l=g(k)for m,n in ipairs(j)do for o,p
 in ipairs(l)do k:remove_pattern_from_processor(n,p)end end end return function(j
 ,k)local l={'Add patterns','Remove patterns','Reload patterns'}c(l,string.
 format('Processor Patterns | %d Selected',#j),function(m)if m==1 then h(j,k)
-elseif m==2 then i(j,k)elseif m==3 then f(k)end end)end end function a.w()local
-c=a.cache.w if not c then c={c=b()}a.cache.w=c end return c.c end end do
+elseif m==2 then i(j,k)elseif m==3 then f(k)end end)end end function a.x()local
+c=a.cache.x if not c then c={c=b()}a.cache.x=c end return c.c end end do
 local function b()local function c()os.pullEvent('key')os.pullEvent('key_up')end
-return c end function a.x()local c=a.cache.x if not c then c={c=b()}a.cache.x=c
-end return c.c end end do local function b()local c=a.a()local d=a.u()local e=a.
-w()local f=a.s()local g=a.o()local h=a.m().format_name local i=a.p()local j=a.x(
+return c end function a.y()local c=a.cache.y if not c then c={c=b()}a.cache.y=c
+end return c.c end end do local function b()local c=a.a()local d=a.v()local e=a.
+x()local f=a.t()local g=a.p()local h=a.n().format_name local i=a.q()local j=a.y(
 )local function k(l)local m={}for n,o in next,l.processors do m[n]=o.patterns
 end c.set(c.settings.PROCESSORS,m)c.save()end local function l(m)local n=m:
 get_processors()if#n<=0 then term.clear()term.setCursorPos(1,1)term.write(
@@ -217,15 +221,15 @@ local function n(o)local p=f(o:get_processors(),'Deregister Processors',h)for q,
 r in ipairs(p)do o:remove_processor(r)end k(o)end return function(o,p,q,r)d({
 'Configure patterns','Register','Deregister'},'Processor Inventories',function(s
 )if s==1 then l(r)elseif s==2 then m(o,p,q,r)elseif s==3 then n(r)end end)end
-end function a.y()local c=a.cache.y if not c then c={c=b()}a.cache.y=c end
+end function a.z()local c=a.cache.z if not c then c={c=b()}a.cache.z=c end
 return c.c end end do local function b()local function c(d,e,f)local g,h=term.
 getSize()term.setCursorPos(1,1)term.write(d)if e~=nil then term.setTextColor(
 colors.lightGray)term.setCursorPos(1,h)term.write(e)term.setTextColor(colors.
 white)end term.setCursorPos(1,3)term.write('$ ')return read(nil,nil,f)end return
-c end function a.z()local c=a.cache.z if not c then c={c=b()}a.cache.z=c end
-return c.c end end do local function b()local c=a.n()local d=a.u()local e=a.y()
-local f=a.s()local g=a.t()local h=a.z()local i=a.m().format_name local j=a.v()
-local k=a.x()local l="Not enough ingredients for %dx '%s'\n%s"local function m(n
+c end function a.A()local c=a.cache.A if not c then c={c=b()}a.cache.A=c end
+return c.c end end do local function b()local c=a.o()local d=a.v()local e=a.z()
+local f=a.t()local g=a.u()local h=a.A()local i=a.n().format_name local j=a.w()
+local k=a.y()local l="Not enough ingredients for %dx '%s'\n%s"local function m(n
 )local o=j(n)local p=g(n:get_registered_patterns(),'Choose Pattern',o)local q=n:
 get_available_processors(p)if#q==0 then term.clear()term.setCursorPos(1,1)term.
 write('No available processors have this pattern!')k()return end term.clear()
@@ -238,47 +242,48 @@ and'CRAFTABLE'or'MISSING',v,w)end if not u then printError(l:format(r,o(p),t))k(
 'Select Processor Distribution | %dx %s',r,o(p)),i)if#t==0 then return end c.
 spawn(n.start_batch_process_async,n,t,p,r)end return function(n,o,p,q)d({'Craft'
 ,'Processor inventories'},'Auto Processing Menu',function(r)if r==1 then m(q)
-elseif r==2 then e(n,o,p,q)end end)end end function a.A()local c=a.cache.A if
-not c then c={c=b()}a.cache.A=c end return c.c end end do local function b()
+elseif r==2 then e(n,o,p,q)end end)end end function a.B()local c=a.cache.B if
+not c then c={c=b()}a.cache.B=c end return c.c end end do local function b()
 local function c(d,e)local f local g=math.huge for h,i in ipairs(d)do local j=
 string.find(i,e)if j and j<g then g=j f=i end end return f end return c end
-function a.B()local c=a.cache.B if not c then c={c=b()}a.cache.B=c end return c.
-c end end do local function b()local c=a.u()local d=a.A()local e=a.t()local f=a.
-z()local g=a.B()local h=a.m().format_name local i=a.x()local j=
+function a.C()local c=a.cache.C if not c then c={c=b()}a.cache.C=c end return c.
+c end end do local function b()local c=a.v()local d=a.B()local e=a.u()local f=a.
+A()local g=a.C()local h=a.n().format_name local i=a.y()local j=
 'Exporting %d items...'local k='Importing items...'local l=
 'Transferred %d items.'local function m(n,o)local function p(q)local r={}for s
-in next,o:get_system_items()do local t,u=string.find(s,q)if u~=nil then table.
+in next,n:get_system_items()do local t,u=string.find(s,q)if u~=nil then table.
 insert(r,s:sub(u+1,-1))end end return r end local function q()term.clear()local
 r=f('Storage System Output',"'exit' to return to menu",p)if r=='exit'then return
-true end local s=o:get_system_items()local t={}for u in next,s do table.insert(t
+true end local s=n:get_system_items()local t={}for u in next,s do table.insert(t
 ,u)end local u=g(t,r)if u==nil then printError(string.format(
 "Unable to find '%s'",r))i()return false end term.clear()local v=f(string.
 format('Item Count - %s | %d in system',h(u),s[u]),"'cancel' to restart")if v==
 'cancel'then return false end local w=tonumber(v)or 64 print(j:format(w))local x
-=o:export_item(u,n,nil,w)print(l:format(x))i()end while true do if q()then break
+=n:export_item(u,o,nil,w)print(l:format(x))i()end while true do if q()then break
 end end end local function n(o,p)local q,r=e({'yesss!!!!!!','wait nvm'},
 'Storage System Input - Are you sure?')if r==2 then return end term.clear()term.
-setCursorPos(1,1)print(k)local s=p:import_inventory(o)print(l:format(s))i()end
+setCursorPos(1,1)print(k)local s=o:import_inventory(p)print(l:format(s))i()end
 local function o(p)local q,r=term.getSize()term.clear()term.setCursorPos(1,r)
 term.write('Press any key to return')p.setVisible(true)i()p.setVisible(false)end
-return function(p,q,r,s,t)return function()c({'Storage output','Storage input',
-'Processing','View chart'},'Storage IO Menu',function(u)if u==1 then m(q,r)
-elseif u==2 then n(q,r)elseif u==3 then d(p,q,r,s)elseif u==4 then o(t)end end)
-term.clear()term.setCursorPos(1,1)end end end function a.C()local c=a.cache.C if
-not c then c={c=b()}a.cache.C=c end return c.c end end end local b=a.a()local c=
-a.m()local d=a.n()local e=c.format_name local f=a.o()local g=a.p()local h=a.q()
-local i=a.s()local j=a.t()local k=a.C()local l=peripheral.find('modem')b.load()
-local m=b.get(b.settings.IO_INVENTORY)local n=settings.get(b.settings.
-SYSTEM_INVENTORIES)if m==nil or not l.isPresentRemote(m)then m=j(g(l),
-'Choose IO Inventory',e)b.set(b.settings.IO_INVENTORY,m)end if n==nil then n=i(
-f(g(l),function(o,p)return p~=m end),'Select System Inventories',e)b.set(b.
-settings.SYSTEM_INVENTORIES,n)end b.save()local o=c.ItemStorage(n)local p=c.
-AutoCrafter(o,b.get(b.settings.PROCESSORS))local q=peripheral.find('monitor')q.
-setTextScale(0.5)local r,s=term.getSize()local t=window.create(term.current(),1,
-1,r,s-1,false)local u=c.StorageDisplay(q,{column_count=b.get(b.settings.
-MONITORS_COLUMNS),index_justification=4})local v=c.StorageDisplay(t,{
-column_count=2,index_justification=3})d.spawn(function()while true do o:
-update_inventories()local w,x=term.getCursorPos()local y=o:
-get_system_items_sorted()v:draw_item_cells(y)u:draw_item_cells(y)term.
-setCursorPos(w,x)sleep(3)end end)h(p)parallel.waitForAny(k(l,m,o,p,t),d.
-start_scheduler)
+return function(p,q,r,s,t)c({'Storage output','Storage input','Processing',
+'View chart'},'Storage IO Menu',function(u)if u==1 then m(r,q)elseif u==2 then
+n(r,q)elseif u==3 then d(p,q,r,s)elseif u==4 then o(t)end end)term.clear()term.
+setCursorPos(1,1)end end function a.D()local c=a.cache.D if not c then c={c=b()}
+a.cache.D=c end return c.c end end end local b=a.a()local c=a.n()local d=a.o()
+local e=c.format_name local f=a.p()local g=a.q()local h=a.r()local i=a.t()local
+j=a.u()local k=a.D()local l=peripheral.find('monitor')assert(l,
+'Missing monitor!')local m=peripheral.find('modem')assert(m,'Missing modem!')
+local n=m.getNameLocal()assert(n,"Modem isn't on!")b.load()local o=turtle and n
+or b.get(b.settings.IO_INVENTORY)local p=settings.get(b.settings.
+SYSTEM_INVENTORIES)if o==nil or m.isPresentRemote(o)and o~=n then o=j(g(m),
+'Choose IO Inventory',e)b.set(b.settings.IO_INVENTORY,o)end if p==nil then p=i(
+f(g(m),function(q,r)return r~=o end),'Select System Inventories',e)b.set(b.
+settings.SYSTEM_INVENTORIES,p)end b.save()local q=c.ItemStorage(p)local r=c.
+AutoCrafter(q,b.get(b.settings.PROCESSORS))l.setTextScale(0.5)local s,t=term.
+getSize()local u=window.create(term.current(),1,1,s,t-1,false)local v=c.
+StorageDisplay(l,{column_count=b.get(b.settings.MONITORS_COLUMNS),
+index_justification=4})local w=c.StorageDisplay(u,{column_count=2,
+index_justification=3})d.spawn(function()while true do q:update_inventories()
+local x,y=term.getCursorPos()local z=q:get_system_items_sorted()w:
+draw_item_cells(z)v:draw_item_cells(z)term.setCursorPos(x,y)sleep(3)end end)d.
+spawn(k,m,o,q,r,u)h(r)d.start_scheduler()

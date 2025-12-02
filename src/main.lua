@@ -16,8 +16,14 @@ local prompt_choice = require("prompt/choice")
 
 local io_menu = require("menus/io")
 
+local monitor = peripheral.find("monitor") ---@type peripheral.Monitor
+assert(monitor, "Missing monitor!")
+
 local modem = peripheral.find("modem") ---@type peripheral.Modem
+assert(modem, "Missing modem!")
+
 local this_computer = modem.getNameLocal()
+assert(this_computer, "Modem isn't on!")
 
 config.load()
 
@@ -47,7 +53,6 @@ config.save()
 local system = storage.ItemStorage(system_inventories)
 local autocrafter = storage.AutoCrafter(system, config.get(config.settings.PROCESSORS))
 
-local monitor = peripheral.find("monitor") ---@type peripheral.Monitor
 monitor.setTextScale(0.5)
 
 local width, height = term.getSize()
@@ -78,9 +83,8 @@ task.spawn(function()
 	end
 end)
 
+task.spawn(io_menu, modem, io_inventory, system, autocrafter, terminal_window)
+
 reload_patterns(autocrafter)
 
-parallel.waitForAny(
-	io_menu(modem, io_inventory, system, autocrafter, terminal_window),
-	task.start_scheduler
-)
+task.start_scheduler()
