@@ -6,8 +6,6 @@ local prompt_choice = require("prompt/choice")
 local function menu(options, title, callback)
 	table.insert(options, "Exit")
 	
-	local last_option
-	
 	while true do
 		local choice, index = prompt_choice(options, title)
 
