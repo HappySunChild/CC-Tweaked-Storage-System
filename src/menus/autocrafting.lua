@@ -1,12 +1,14 @@
-local menu = require("utility/menus/menu")
+local task = require("lib/task")
 
-local processors_menu = require("utility/menus/processors")
+local menu = require("menus/menu")
 
-local prompt_checkbox = require("utility/prompt/checkbox")
-local prompt_choice = require("utility/prompt/choice")
-local prompt_text = require("utility/prompt/text")
+local processors_menu = require("menus/processors")
 
-local format_name = require("storage/format/format_name")
+local prompt_checkbox = require("prompt/checkbox")
+local prompt_choice = require("prompt/choice")
+local prompt_text = require("prompt/text")
+
+local format_name = require("lib/storage").format_name
 local pattern_formatter = require("utility/pattern_formatter")
 local yield_for_user = require("utility/yield_for_user")
 
@@ -85,7 +87,13 @@ local function prompt_craft(autocrafter)
 		return
 	end
 
-	os.queueEvent("start_crafting", chosen_processors, pattern, count)
+	task.spawn(
+		autocrafter.start_batch_process_async,
+		autocrafter,
+		chosen_processors,
+		pattern,
+		count
+	)
 end
 
 ---@param modem peripheral.Modem

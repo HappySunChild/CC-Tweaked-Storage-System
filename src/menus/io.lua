@@ -1,24 +1,21 @@
-local menu = require("utility/menus/menu")
+local menu = require("menus/menu")
 
-local autocrafting_menu = require("utility/menus/autocrafting")
+local autocrafting_menu = require("menus/autocrafting")
 
-local prompt_choice = require("utility/prompt/choice")
-local prompt_text = require("utility/prompt/text")
+local prompt_choice = require("prompt/choice")
+local prompt_text = require("prompt/text")
 
 local choose_nearest = require("utility/choose_nearest")
-local format_name = require("storage/format/format_name")
+local format_name = require("lib/storage").format_name
 local yield_for_user = require("utility/yield_for_user")
 
 local EXPORTING_ITEM = "Exporting %d items..."
 local IMPORING_ITEM = "Importing items..."
 local ITEMS_TRANSFERRED = "Transferred %d items."
 
----@param io_inventory string
 ---@param system ItemStorage
----@param output_window window.Window
-local function output_prompt(io_inventory, system, output_window)
-	output_window.setVisible(true)
-
+---@param io_inventory string
+local function output_prompt(system, io_inventory)
 	---@param partial string
 	---@return string[]
 	local function system_autocomplete(partial)
@@ -37,8 +34,6 @@ local function output_prompt(io_inventory, system, output_window)
 
 	local function loop()
 		term.clear()
-
-		output_window.redraw()
 
 		local item_input =
 			prompt_text("Storage System Output", "'exit' to return to menu", system_autocomplete)
@@ -65,8 +60,6 @@ local function output_prompt(io_inventory, system, output_window)
 		end
 
 		term.clear()
-
-		output_window.redraw()
 
 		local count_input = prompt_text(
 			string.format(
@@ -97,12 +90,10 @@ local function output_prompt(io_inventory, system, output_window)
 			break
 		end
 	end
-
-	output_window.setVisible(false)
 end
----@param io_inventory string
 ---@param system ItemStorage
-local function input_prompt(io_inventory, system)
+---@param io_inventory string
+local function input_prompt(system, io_inventory)
 	local _, index =
 		prompt_choice({ "yesss!!!!!!", "wait nvm" }, "Storage System Input - Are you sure?")
 
@@ -140,18 +131,17 @@ end
 ---@param io_inventory string
 ---@param system ItemStorage
 ---@param autocrafter AutoCrafter
----@param output_window window.Window
 ---@param terminal_window window.Window
-return function(modem, io_inventory, system, autocrafter, output_window, terminal_window)
+return function(modem, io_inventory, system, autocrafter, terminal_window)
 	return function()
 		menu(
 			{ "Storage output", "Storage input", "Processing", "View chart" },
 			"Storage IO Menu",
 			function(index)
 				if index == 1 then
-					output_prompt(io_inventory, system, output_window)
+					output_prompt(system, io_inventory)
 				elseif index == 2 then
-					input_prompt(io_inventory, system)
+					input_prompt(system, io_inventory)
 				elseif index == 3 then
 					autocrafting_menu(modem, io_inventory, system, autocrafter)
 				elseif index == 4 then

@@ -1,4 +1,4 @@
-local list = require("utility/prompt/list")
+local list = require("prompt/list")
 
 ---Prompts the user with a list that they can choose one element from.
 ---@param choices string[]

@@ -1,4 +1,4 @@
-local list = require("utility/prompt/list")
+local list = require("prompt/list")
 
 ---@param tbl table
 ---@return table

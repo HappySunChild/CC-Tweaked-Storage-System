@@ -1,12 +1,13 @@
-local menu = require("utility/menus/menu")
+local config = require("lib/config")
 
-local pattern_menu = require("utility/menus/pattern")
+local menu = require("menus/menu")
 
-local prompt_checkbox = require("utility/prompt/checkbox")
+local pattern_menu = require("menus/pattern")
 
-local config = require("utility/config")
+local prompt_checkbox = require("prompt/checkbox")
+
 local filter = require("utility/filter")
-local format_name = require("storage/format/format_name")
+local format_name = require("lib/storage").format_name
 local get_modem_inventories = require("utility/get_modem_inventories")
 local yield_for_user = require("utility/yield_for_user")
 

@@ -1,4 +1,4 @@
-local get_inventory = require("storage/utility/get_inventory")
+local get_inventory = require("lib/storage/utility/get_inventory")
 
 local UNKNOWN_INVENTORY = 'Unable to find inventory "%s", is it being tracked?'
 
@@ -15,14 +15,15 @@ end
 local CLASS = {
 	---@param self ItemStorage
 	---@param inv_name string The name of the peripheral to track (i.e. `"left"` or `"minecraft:chest_0"`)
-	track_inventory = function(self, inv_name)
+	load_peripheral = function(self, inv_name)
 		self.inventories[inv_name] = get_inventory(inv_name)
 	end,
 	---@param self ItemStorage
 	---@param inv_name string The name of the peripheral to stop tracking (i.e. `"left"` or `"minecraft:chest_0"`)
-	untrack_inventory = function(self, inv_name)
+	unload_peripheral = function(self, inv_name)
 		self.inventories[inv_name] = nil
 	end,
+
 	---Updates the internal item cache by reading the contents of all the tracked inventories.
 	---@param self ItemStorage
 	update_inventories = function(self)
@@ -283,7 +284,7 @@ local function ItemStorage(initial_inventories)
 
 	if initial_inventories ~= nil then
 		for _, inventory in next, initial_inventories do
-			new_storagesystem:track_inventory(inventory)
+			new_storagesystem:load_peripheral(inventory)
 		end
 	end
 

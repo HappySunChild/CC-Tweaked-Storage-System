@@ -1,6 +1,6 @@
-local menu = require("utility/menus/menu")
+local menu = require("menus/menu")
 
-local prompt_checkbox = require("utility/prompt/checkbox")
+local prompt_checkbox = require("prompt/checkbox")
 
 local pattern_formatter = require("utility/pattern_formatter")
 local reload_patterns = require("utility/reload_patterns")

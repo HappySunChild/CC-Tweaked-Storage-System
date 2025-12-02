@@ -1,9 +1,19 @@
+local dummy_turtle = require("lib/storage/utility/dummy_turtle")
+
 local UNKNOWN_PERIPHERAL = 'Unable to find peripheral "%s"'
 local INVALID_INVENTORY = 'Peripheral "%s" is not a valid inventory!'
+
+local modem = peripheral.find("modem") ---@type peripheral.Modem
+local this_computer = modem.getNameLocal()
 
 ---@param inv_name string
 ---@return peripheral.Inventory
 local function get_inventory(inv_name)
+	-- if the inventory is this computer, then that means that we're probably a turtle
+	if inv_name == this_computer then
+		return dummy_turtle
+	end
+
 	local inventory = peripheral.wrap(inv_name)
 
 	if inventory == nil then

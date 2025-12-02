@@ -1,8 +1,8 @@
-local abbreviate = require("storage/format/abbreviate")
-local format_name = require("storage/format/format_name")
-local justify = require("storage/format/justify")
-local paint = require("storage/format/paint")
-local truncate = require("storage/format/truncate")
+local abbreviate = require("lib/storage/format/abbreviate")
+local format_name = require("lib/storage/format/format_name")
+local justify = require("lib/storage/format/justify")
+local paint = require("lib/storage/format/paint")
+local truncate = require("lib/storage/format/truncate")
 
 local INDEX_FORMAT = "%d. "
 
